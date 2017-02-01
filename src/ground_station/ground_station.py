@@ -31,6 +31,8 @@ def accepted_topic(topic): # checks for valid rostopics to filter through
     else:
         return False
 
+map_coords = {'competition':[38.146191, -76.429454],'BYU':[40.2518,-111.6493]}
+
 class GroundStationWidget(QWidget):
 
     def __init__(self):
@@ -39,9 +41,9 @@ class GroundStationWidget(QWidget):
         # The layout of the ground station window
         self._principle_layout = QBoxLayout(0) # main layout is horizontal (0)
         self._map_layout = QVBoxLayout()
-        self._principle_layout.addLayout(self._map_layout)
+        self._principle_layout.addLayout(self._map_layout, 4)
         self._control_layout = QVBoxLayout()
-        self._principle_layout.addLayout(self._control_layout)
+        self._principle_layout.addLayout(self._control_layout, 3)
 
         self.setAcceptDrops(False) # Dragging and Dropping not permitted
         self.setWindowTitle('ROS_PLANE Ground Station')
@@ -52,7 +54,7 @@ class GroundStationWidget(QWidget):
         #self._tf = tf.TransformListener()#---
 
         #=============================
-        self._mw = MapWindow()
+        self._mw = MapWindow(map_coords['BYU'])
         self._map_layout.addWidget(self._mw)
         self._tv = TopicViewer()
         self._control_layout.addWidget(self._tv, 2) # ratio of these numbers determines window proportions
@@ -72,7 +74,7 @@ class GroundStationWidget(QWidget):
 
         self.setLayout(self._principle_layout)
 
-    def save_settings(self, plugin_settings, instance_settings):
+    def save_settings(self, plugin_settings, instance_settings): # have a file to read and write from
         #self._nav_view.save_settings(plugin_settings, instance_settings)
         print('fake save') # < prints to terminal
 
