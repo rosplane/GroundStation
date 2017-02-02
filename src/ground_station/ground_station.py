@@ -31,8 +31,6 @@ def accepted_topic(topic): # checks for valid rostopics to filter through
     else:
         return False
 
-map_coords = {'competition':[38.146191, -76.429454],'BYU':[40.2518,-111.6493]}
-
 class GroundStationWidget(QWidget):
 
     def __init__(self):
@@ -54,7 +52,7 @@ class GroundStationWidget(QWidget):
         #self._tf = tf.TransformListener()#---
 
         #=============================
-        self._mw = MapWindow(map_coords['BYU'])
+        self._mw = MapWindow()
         self._map_layout.addWidget(self._mw)
         self._tv = TopicViewer()
         self._control_layout.addWidget(self._tv, 2) # ratio of these numbers determines window proportions

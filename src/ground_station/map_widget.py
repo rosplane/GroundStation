@@ -1,23 +1,31 @@
-#from python_qt_binding.QtWidgets import QWidget
+from python_qt_binding import loadUi
+from python_qt_binding.QtWidgets import QWidget
 from PyKDE4.marble import *
 
-# Should probably move this functionality to another file and make this class
-# a more intermediary class with toggler (and .kml loader?)
-class MapWindow(Marble.MarbleWidget):
-    def __init__(self, latlon):
+from .marble_map import MarbleMap
+import os
+
+PWD = os.path.dirname(os.path.abspath(__file__))
+
+map_coords = {'Competition':[38.146191, -76.429454],'BYU':[40.2518,-111.6493]}
+default_location = 'Competition' # ** Change if needed <^ CHANGE THIS MESS TO A LITTLE XML DB
+
+class MapWindow(QWidget):
+    def __init__(self, uifname = 'map_widget.ui'):
         super(MapWindow, self).__init__()
-        self.setMapThemeId("earth/openstreetmap/openstreetmap.dgml")
-        self.setProjection(Marble.Mercator)
-        self.setShowOverviewMap(False)
-        # default home is on naval base
-        self._home = Marble.GeoDataCoordinates(latlon[1], latlon[0], 0.0, Marble.GeoDataCoordinates.Degree)
-        self.centerOn(self._home)
-        self.zoomView(2850)
-    def change_home(self, latlon):
-        # for a future home toggler (example: changing between BYU and naval base)
-        self._home = Marble.GeoDataCoordinates(latlon[1], latlon[0], 0.0, Marble.GeoDataCoordinates.Degree)
-        self.centerOn(self._home)
-        self.zoomView(2400)
+        ui_file = os.path.join(PWD, 'resources', uifname)
+        loadUi(ui_file, self, {'MarbleMap' : MarbleMap})
+        # there is now a self._marble_map, and there can only be one
+        self.setObjectName(uifname)
+
+        self._home_opts.clear()
+        self._home_opts.addItems(list(map_coords))
+
+        self._home_opts.setCurrentIndex(list(map_coords).index(default_location))
+        self._home_opts.currentIndexChanged[str].connect(self._update_home)
+
+    def _update_home(self):
+        self._marble_map.change_home(map_coords[self._home_opts.currentText()])
     def close(self):
         super(MapWindow, self).close()
     def save_settings(self, plugin_settings, instance_settings):

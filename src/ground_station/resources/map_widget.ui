@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MapWindow</class>
+ <widget class="QWidget" name="MapWindow">
+   <layout class="QVBoxLayout" name="verticalLayout">
+     <property name="margin">
+      <number>0</number>
+     </property>
+     <item>
+        <widget class="QComboBox" name="_home_opts">
+         <property name="minimumSize">
+          <size>
+           <width>250</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Where the map will be centered.</string>
+         </property>
+        </widget>
+     </item>
+     <item>
+      <widget class="MarbleMap" name="_marble_map">
+       <property name="toolTip">
+        <string>Keep an eye on your plane!</string>
+       </property>
+      </widget>
+     </item>
+   </layout>
+ </widget>
+ <customwidgets>
+
+  <customwidget>
+   <class>MarbleMap</class>
+   <extends>Marble.MarbleWidget</extends>
+   <header>ground_station.map_widget</header>
+  </customwidget>
+  
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>
