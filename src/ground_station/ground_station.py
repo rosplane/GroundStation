@@ -59,6 +59,7 @@ class GroundStationWidget(QWidget):
         self._cw = ControlWindow()
         self._control_layout.addWidget(self._cw, 1)
         #=============================
+        print('fake init') #-------------------------
 
         #self._set_pose = QPushButton('UB 1')
         #self._set_pose.clicked.connect(self._nav_view.pose_mode) # <<<<<<<<<< Button interface to class
@@ -77,5 +78,6 @@ class GroundStationWidget(QWidget):
         print('fake save') # < prints to terminal
 
     def restore_settings(self, plugin_settings, instance_settings):
+        # OCCURS AFTER __INIT__()
         #self._nav_view.restore_settings(plugin_settings, instance_settings)
         print('fake restore')

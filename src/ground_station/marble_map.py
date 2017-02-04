@@ -1,4 +1,5 @@
 from PyKDE4.marble import *
+import map_info_parser
 
 class MarbleMap(Marble.MarbleWidget):
     def __init__(self, parent=None): # Parent line VERY important
@@ -6,12 +7,15 @@ class MarbleMap(Marble.MarbleWidget):
         self.setMapThemeId("earth/openstreetmap/openstreetmap.dgml")
         self.setProjection(Marble.Mercator)
         self.setShowOverviewMap(False)
-        # default home is on naval base
-        self._home_pt = Marble.GeoDataCoordinates(-76.429454, 38.146191, 0.0, Marble.GeoDataCoordinates.Degree)
+
+        self._map_coords = map_info_parser.get_gps_dict()
+        def_latlonzoom = self._map_coords[map_info_parser.get_default()]
+        self._home_pt = Marble.GeoDataCoordinates(def_latlonzoom[1], def_latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree) # +
         self.centerOn(self._home_pt)
-        self.zoomView(2850)
-    def change_home(self, latlon):
-        # for a future home toggler (example: changing between BYU and naval base)
-        self._home_pt = Marble.GeoDataCoordinates(latlon[1], latlon[0], 0.0, Marble.GeoDataCoordinates.Degree)
+        self.zoomView(def_latlonzoom[2])
+
+    def change_home(self, map_name):
+        latlonzoom = self._map_coords[map_name]
+        self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.centerOn(self._home_pt)
-        self.zoomView(2850)
+        self.zoomView(latlonzoom[2])

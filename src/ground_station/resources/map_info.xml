@@ -1,0 +1,29 @@
+<maps default="Naval Base Competition">
+    <!--
+    <map name="Map Name For Menu">
+        <lat>Latitude Float (N+, S-)</lat>
+        <lon>Longitude Float (E+, W-)</lon>
+        <zoom>How Much Map Zooms (int)</zoom>
+    </map>
+    -->
+	<map name="Brigham Young University">
+		<lat>40.2518</lat>
+		<lon>-111.6493</lon>
+        <zoom>2850</zoom>
+	</map>
+    <map name="Naval Base Competition">
+        <lat>38.146191</lat>
+        <lon>-76.429454</lon>
+        <zoom>2850</zoom>
+    </map>
+    <map name="Utah County Airfield">
+        <lat>40.3634</lat>
+        <lon>-111.9019</lon>
+        <zoom>2900</zoom>
+    </map>
+    <map name="Rock Canyon Park">
+	<lat>40.2672</lat>
+	<lon>-111.6356</lon>
+	<zoom>3150</zoom>
+    </map>
+</maps>
