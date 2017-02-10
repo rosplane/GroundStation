@@ -12,10 +12,13 @@ class MarbleMap(Marble.MarbleWidget):
         def_latlonzoom = self._map_coords[map_info_parser.get_default()]
         self._home_pt = Marble.GeoDataCoordinates(def_latlonzoom[1], def_latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree) # +
         self.centerOn(self._home_pt)
-        self.zoomView(def_latlonzoom[2])
+        self.setZoom(def_latlonzoom[2])
 
     def change_home(self, map_name):
         latlonzoom = self._map_coords[map_name]
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.centerOn(self._home_pt)
-        self.zoomView(latlonzoom[2])
+        self.setZoom(latlonzoom[2])
+
+    def get_home(self):
+        return self._home_pt
