@@ -1,7 +1,9 @@
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
 from PyKDE4.marble import *
+from PyQt4 import QtGui
 
+from .manage_kml import ManageKML
 from .marble_map import MarbleMap
 import os
 
@@ -23,7 +25,13 @@ class MapWindow(QWidget):
 
         self._home_opts.setCurrentIndex(list(map_coords).index(default_location))
         self._home_opts.currentIndexChanged[str].connect(self._update_home)
-
+        
+        self.init_manage_kml()
+        
+    def init_manage_kml(self):
+        self.manageKML = ManageKML(self._marble_map)
+        self._manage_KML.clicked.connect(self.manageKML.display_manage_KML_modal)
+        self.manageKML.add_default_KML_files() 
     def _update_home(self):
         self._marble_map.change_home(map_coords[self._home_opts.currentText()])
     def close(self):

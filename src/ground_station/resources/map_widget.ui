@@ -20,6 +20,19 @@
         </widget>
      </item>
      <item>
+      <widget class="QPushButton" name="_manage_KML">
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Manage KML Files</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="MarbleMap" name="_marble_map">
        <property name="toolTip">
         <string>Keep an eye on your plane!</string>
