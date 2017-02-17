@@ -11,7 +11,6 @@ from PyQt4.QtCore import *
 from python_qt_binding.QtGui import QIcon, QPixmap
 import rospy
 from fcu_common.msg import FW_State
-from math import *
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 
@@ -49,11 +48,6 @@ class Plane(QObject):
 
     def finishWork(self):
         self.timer.stop()
-
-#def createStylePlane(style):
-#    iconStyle = Marble.GeoDataIconStyle();
-#    iconStyle.setIconPath(os.path.join(PWD, 'resources', 'airplane.png'))
-#    style.setIconStyle(iconStyle)
 
 class MapWindow(QWidget):
     def __init__(self, uifname = 'map_widget.ui'):
@@ -102,7 +96,9 @@ class MapWindow(QWidget):
 
     def close(self):
         super(MapWindow, self).close()
+
     def save_settings(self, plugin_settings, instance_settings):
         pass
+
     def restore_settings(self, plugin_settings, instance_settings):
         pass
