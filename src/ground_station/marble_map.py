@@ -46,7 +46,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def render(self, painter, viewPort, renderPos, layer):
         painter.m_index = 0 # should provide a surface paint
         painter.setRenderHint(QPainter.Antialiasing, True)
-        # self.drawWaypoints(painter)
+        self.drawWaypoints(painter)
         # Don't draw these if it's too zoomed out
         if (self.marble.zoom() > 2700): 
             self.drawStationaryObstacles(painter)
