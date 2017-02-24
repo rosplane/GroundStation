@@ -18,3 +18,10 @@ def get_gps_dict():
         zoom = int(str(xmlnode.find('zoom').text))
         gps_dict[name] = [lat, lon, zoom]
     return gps_dict
+
+def get_waypoints(map_name):
+    xmlroot = ET.parse(INFO_FILE_PATH).getroot()
+    mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
+    if not mapnode.find('wp') is None:
+        return eval(mapnode.find('wp').text.strip())
+    return []

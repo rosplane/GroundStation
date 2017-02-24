@@ -11,26 +11,25 @@ from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from python_qt_binding.QtGui import QIcon, QPixmap
 import rospy
-from fcu_common.msg import FW_State
+from fcu_common.msg import GPS
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 
-class StateSubscriber(): #+++++++++++++++++++++
+class StateSubscriber():
     def __init__(self):
-        # starting with just position
-        self.dn = 0.0 # "North" degrees
-        self.de = 0.0 # "East" degrees
-        rospy.Subscriber("/junker/truth", FW_State, self.callback)
+        # subscribing to fcu_common/GPS to get plane latitude and longitude
+        self.lat = 0.0 # in degrees
+        self.lon = 0.0
+        rospy.Subscriber("/gps/data", GPS, self.callback)
 
-    def callback(self, FW_State):
-        # for now, conversion is found in Plane::iterate() +++++++++++++++++++++
-        self.dn = FW_State.position[0]
-        self.de = FW_State.position[1]
+    def callback(self, GPS):
+        self.lat = GPS.latitude
+        self.lon = -1.0*GPS.longitude
 
 class Plane(QObject):
     def __init__(self, location):
         QObject.__init__(self)
-        self.location = location
+        self.location = location # if no ros data is received, plane placed at the home_pt
         self.timer = QTimer(self)
         self.state = StateSubscriber() # retrieves state info
 
@@ -40,11 +39,11 @@ class Plane(QObject):
         self.timer.start()
 
     def iterate(self):
-        # update plane data +++++++++++++++++CHANGE/REMOVE CONVERSION EVENTUALLY+++++++++++
-        lat = self.location.latitude(Marble.GeoDataCoordinates.Degree) + self.state.de/111111.0;
-        lon = self.location.longitude(Marble.GeoDataCoordinates.Degree) + self.state.dn/111111.0;
-
+        # update plane data
+        lat = self.state.lat;
+        lon = self.state.lon;
         coord = Marble.GeoDataCoordinates(lon, lat, 0.0, Marble.GeoDataCoordinates.Degree);
+        # Advertise coordinate change through PyQt backend
         self.emit(SIGNAL("coordinatesChanged(PyQt_PyObject)"), coord)
 
     def finishWork(self):
@@ -67,7 +66,6 @@ class MapWindow(QWidget):
         plane_icon = QPixmap(button_icon_file)
         self._plot_plane_button.setIcon(QIcon(plane_icon))
         self._plot_plane_button.clicked.connect(self._start_plane)
-        #self._start_plane() #-------------
 
         self.plane = Marble.GeoDataPlacemark("Plane")
         self.document = Marble.GeoDataDocument()

@@ -1,13 +1,12 @@
 from PyKDE4.marble import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from geopy.distance import vincenty
+import os.path
 import math
 
 import map_info_parser
-#import rospy
-#from fcu_common.msg import FW_Waypoint
-#import numpy as np
+import rospy
+from fcu_common.msg import FW_Waypoint
 
 '''
 For changing color of current waypoint to green:
@@ -17,18 +16,25 @@ MarbleMap() class]],
 and have PaintLayer have an internal state-subscriber-like class whose data member
 of current waypoint is always updating.
 '''
+class WaypointSubscriber():
+    def __init__(self):
+        # subscribing to fcu_common/GPS to get plane latitude and longitude
+        self.lat = 0.0 # in degrees
+        self.lon = 0.0
+        #rospy.Subscriber("/waypoint_path", FW_Waypoint, self.callback_waypoints)
+
+    def callback(self, GPS):
+        self.lat = GPS.latitude
+        self.lon = -1.0*GPS.longitude
+
 # Class for allowing the widget to paint to the marble map
 class PaintLayer(Marble.LayerInterface, QObject):
     def __init__(self, marble):
         QObject.__init__(self)
         self.marble = marble
-        ''' This is only a temporary object; should be replaced by an xml file or something
-            These are the competition waypoints, and are currently set to always be drawn
-            at the specified latlong coordinates
-        '''
-        self.waypoints = [(38.14531389,-76.42911944),
-        (38.149222,-76.4294833),(38.150133,-76.4308556),(38.14895,-76.4322861),
-        (38.147011,-76.4306417),(38.1437833,-76.4319944)]
+        self._home_map = self.marble._home_map
+        self.waypoints = map_info_parser.get_waypoints(self._home_map)
+        # subscriber class +++++++++++++++++++++++++++++++++++
 
         # Stationary obstacles will have a latitude, longitude, cylinder_radius and cylinder_height
         self.stationaryObstacles = [(38.147,-76.428,20,25),
@@ -55,7 +61,10 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
-        # Draw waypoints according to latlong degrees
+        # Draw waypoints according to latlong degrees for current map
+        self._home_map = self.marble._home_map
+        self.waypoints = map_info_parser.get_waypoints(self._home_map)
+
         for waypoint in self.waypoints:
             location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
@@ -99,17 +108,20 @@ class PaintLayer(Marble.LayerInterface, QObject):
                 painter.drawEllipse(location, pixelDiameter, pixelDiameter)
 
 
-
 class MarbleMap(Marble.MarbleWidget):
     def __init__(self, parent=None): # Parent line VERY important
         super(MarbleMap, self).__init__() # MarbleWidget constructor
-        #self.setMapThemeId("earth/satelliteview/bluemarble.dgml") # satellite, doesn't load very well
-        self.setMapThemeId("earth/openstreetmap/openstreetmap.dgml") # street view
+        # Check if Google Maps files exist
+        if os.path.isfile("~/.local/share/marble/maps/earth/google-maps-satellite/google-maps-satellite.dgml"):
+            self.setMapThemeId("earth/google-maps-satellite/google-maps-satellite.dgml")
+        else: # Default to open street map
+            self.setMapThemeId("earth/openstreetmap/openstreetmap.dgml") # street view
         self.setProjection(Marble.Mercator)
         self.setShowOverviewMap(False)
 
+        self._home_map = map_info_parser.get_default()
         self._map_coords = map_info_parser.get_gps_dict()
-        def_latlonzoom = self._map_coords[map_info_parser.get_default()]
+        def_latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(def_latlonzoom[1], def_latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree) # +
         self.centerOn(self._home_pt)
         self.setZoom(def_latlonzoom[2])
@@ -128,6 +140,8 @@ class MarbleMap(Marble.MarbleWidget):
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
+        self._home_map = map_name
+        self.update()
 
     def get_home(self):
         return self._home_pt
