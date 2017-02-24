@@ -1,6 +1,8 @@
 from PyKDE4.marble import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from geopy.distance import vincenty
+import math
 
 import map_info_parser
 #import rospy
@@ -28,19 +30,75 @@ class PaintLayer(Marble.LayerInterface, QObject):
         (38.149222,-76.4294833),(38.150133,-76.4308556),(38.14895,-76.4322861),
         (38.147011,-76.4306417),(38.1437833,-76.4319944)]
 
+        # Stationary obstacles will have a latitude, longitude, cylinder_radius and cylinder_height
+        self.stationaryObstacles = [(38.147,-76.428,20,25),
+        (38.148,-76.429,40,50),(38.149,-76.430,60,75),(38.150,-76.431,80,100),
+        (38.152,-76.433,100,125),(38.154,-76.435,120,150)]
+
+        # Moving obstacles will have a latitude, longitude, sphere_radius and sphere_height
+        self.movingObstacles = [(38.147,-76.424,20,81),
+        (38.148,-76.425,40,50),(38.149,-76.426,60,75),(38.150,-76.427,80,100),
+        (38.152,-76.429,100,125),(38.154,-76.431,120,210)]
+
     def renderPosition(self): # ??
         return ['SURFACE']
 
     def render(self, painter, viewPort, renderPos, layer):
         painter.m_index = 0 # should provide a surface paint
         painter.setRenderHint(QPainter.Antialiasing, True)
+        # self.drawWaypoints(painter)
+        # Don't draw these if it's too zoomed out
+        if (self.marble.zoom() > 2700): 
+            self.drawStationaryObstacles(painter)
+            self.drawMovingObstacles(painter)
+        return True
+
+    def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
         # Draw waypoints according to latlong degrees
         for waypoint in self.waypoints:
             location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
 
-        return True
+    def drawStationaryObstacles(self, painter):
+        # height and radius are both in meters (not feet!)
+        UAV_height = 100 # meters
+        referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
+        # Draw obstacles according to latlong degrees and height relative to the UAV
+        for (latitude, longitude, radius, height) in self.stationaryObstacles:
+            pixelDiameter = math.ceil(2*220*radius/referenceDistance)
+            heightDiff = height-UAV_height
+            location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
+            
+            painter.setPen(QPen(QBrush(Qt.red), 1, Qt.SolidLine, Qt.RoundCap))
+            if (heightDiff < 0):
+                painter.setPen(QPen(QBrush(Qt.darkGreen), 1, Qt.SolidLine, Qt.RoundCap))
+            painter.drawEllipse(location, pixelDiameter, pixelDiameter)
+            painter.drawText(location, str(height))
+
+    def drawMovingObstacles(self, painter):
+        UAV_height = 100 # meters
+        referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
+        # Draw obstacles according to latlong degrees and height relative to the UAV
+        for (latitude, longitude, radius, height) in self.movingObstacles:
+            heightDiff = height-UAV_height
+            location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
+            
+            # Draw maximum radius of sphere in grey
+            pixelDiameter = math.ceil(2*220*radius/referenceDistance)
+            painter.setPen(QPen(QBrush(Qt.gray), 1, Qt.SolidLine, Qt.RoundCap))
+            painter.drawEllipse(location, pixelDiameter, pixelDiameter)
+            painter.drawText(location, str(heightDiff)+ "("+str(radius)+")")
+            
+            # Draw radius of sphere at current height in red (if applicable)
+            # Calculate radius of sphere at current height
+            if abs(heightDiff) < radius:
+                localRadius = math.sqrt(radius*radius - heightDiff*heightDiff)
+                pixelDiameter = math.ceil(2*220*localRadius/referenceDistance)
+                painter.setPen(QPen(QBrush(Qt.red), 1, Qt.SolidLine, Qt.RoundCap))
+                painter.drawEllipse(location, pixelDiameter, pixelDiameter)
+
+
 
 class MarbleMap(Marble.MarbleWidget):
     def __init__(self, parent=None): # Parent line VERY important
