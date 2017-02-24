@@ -112,7 +112,8 @@ class MarbleMap(Marble.MarbleWidget):
     def __init__(self, parent=None): # Parent line VERY important
         super(MarbleMap, self).__init__() # MarbleWidget constructor
         # Check if Google Maps files exist
-        if os.path.isfile("~/.local/share/marble/maps/earth/google-maps-satellite/google-maps-satellite.dgml"):
+        googleMapsPath = os.path.expanduser("~/.local/share/marble/maps/earth/google-maps-satellite/")
+        if os.path.exists(googleMapsPath):
             self.setMapThemeId("earth/google-maps-satellite/google-maps-satellite.dgml")
         else: # Default to open street map
             self.setMapThemeId("earth/openstreetmap/openstreetmap.dgml") # street view
