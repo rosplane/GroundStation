@@ -1,0 +1,4 @@
+- remove fluff
+- add directions for using better plot base
+- fix graph scaling
+- MERGE
