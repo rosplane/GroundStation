@@ -83,7 +83,12 @@ class MapWindow(QWidget):
         self.connect(self.threadFirst, SIGNAL("started()"), self.firstWorker.startWork)
         self.connect(self.threadFirst, SIGNAL("finished()"), self.firstWorker.finishWork)
 
+        #self.connect(self.plane, SIGNAL("destroyed()"), self.handleNewPlane)
+
         self.threadFirst.start()
+
+    def handleNewPlane(self):
+        print("plane deleted, yo.")
 
     def setPlaneCoordinates(self, coord):
         self.plane.setCoordinate(coord)

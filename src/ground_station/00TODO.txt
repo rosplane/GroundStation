@@ -1,4 +1,5 @@
 - remove fluff
+- make graph graph the default topic
 - add directions for using better plot base
 - fix graph scaling
 - MERGE
