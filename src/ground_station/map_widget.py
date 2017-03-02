@@ -63,9 +63,10 @@ class MapWindow(QWidget):
         self._home_opts.setCurrentIndex(list(map_coords).index(map_info_parser.get_default()))
         self._home_opts.currentIndexChanged[str].connect(self._update_home)
 
-        plane_icon = QPixmap(button_icon_file);
-        self._plot_plane_button.setIcon(QIcon(plane_icon))
-        self._plot_plane_button.clicked.connect(self._start_plane)
+        #plane_icon = QPixmap(button_icon_file);
+        #self._plot_plane_button.setIcon(QIcon(plane_icon))
+        #self._plot_plane_button.clicked.connect(self._start_plane)
+        self._start_plane()
 
         self.plane = Marble.GeoDataPlacemark("Plane")
         self.document = Marble.GeoDataDocument()
