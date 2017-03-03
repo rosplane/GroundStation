@@ -6,7 +6,7 @@ import math
 
 import map_info_parser
 import rospy
-from fcu_common.msg import FW_Waypoint
+from fcu_common.msg import GPS, Obstacles, Obstacle
 
 '''
 For changing color of current waypoint to green:
@@ -16,16 +16,43 @@ MarbleMap() class]],
 and have PaintLayer have an internal state-subscriber-like class whose data member
 of current waypoint is always updating.
 '''
-class WaypointSubscriber():
+class GPSSubscriber():
     def __init__(self):
         # subscribing to fcu_common/GPS to get plane latitude and longitude
         self.lat = 0.0 # in degrees
         self.lon = 0.0
+        self.altitude = 0.0
+        rospy.Subscriber("/gps/data", GPS, self.callback)
+        
         #rospy.Subscriber("/waypoint_path", FW_Waypoint, self.callback_waypoints)
 
-    def callback(self, GPS):
-        self.lat = GPS.latitude
-        self.lon = -1.0*GPS.longitude
+    def callback(self, gps):
+        self.lat = gps.latitude
+        self.lon = -1.0*gps.longitude
+        self.altitude = gps.altitude
+
+class ObstaclesSubscriber():
+    def __init__(self):
+        self.stationaryObstacles = []
+        rospy.Subscriber("/obstacles", Obstacles, self.callback)
+
+    def callback(self, obstacles):
+        self.stationaryObstacles = []
+        for obstacle in obstacles.stationary_obstacles:
+            lat = obstacle.latitude
+            lon = obstacle.longitude
+            radius = obstacle.radius
+            height = obstacle.height
+            self.stationaryObstacles.append((lat, lon, radius, height))
+
+        self.movingObstacles = []
+        for obstacle in obstacles.moving_obstacles:
+            lat = obstacle.latitude
+            lon = obstacle.longitude
+            radius = obstacle.radius
+            height = obstacle.height
+            self.movingObstacles.append((lat, lon, radius, height))
+
 
 # Class for allowing the widget to paint to the marble map
 class PaintLayer(Marble.LayerInterface, QObject):
@@ -34,17 +61,9 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.marble = marble
         self._home_map = self.marble._home_map
         self.waypoints = map_info_parser.get_waypoints(self._home_map)
+        self.gpsSubscriber = GPSSubscriber()
+        self.obsSubscriber = ObstaclesSubscriber()
         # subscriber class +++++++++++++++++++++++++++++++++++
-
-        # Stationary obstacles will have a latitude, longitude, cylinder_radius and cylinder_height
-        self.stationaryObstacles = [(38.147,-76.428,20,25),
-        (38.148,-76.429,40,50),(38.149,-76.430,60,75),(38.150,-76.431,80,100),
-        (38.152,-76.433,100,125),(38.154,-76.435,120,150)]
-
-        # Moving obstacles will have a latitude, longitude, sphere_radius and sphere_height
-        self.movingObstacles = [(38.147,-76.424,20,81),
-        (38.148,-76.425,40,50),(38.149,-76.426,60,75),(38.150,-76.427,80,100),
-        (38.152,-76.429,100,125),(38.154,-76.431,120,210)]
 
     def renderPosition(self): # ??
         return ['SURFACE']
@@ -71,41 +90,43 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def drawStationaryObstacles(self, painter):
         # height and radius are both in meters (not feet!)
-        UAV_height = 100 # meters
+        UAV_height = self.gpsSubscriber.altitude # meters
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
         # Draw obstacles according to latlong degrees and height relative to the UAV
-        for (latitude, longitude, radius, height) in self.stationaryObstacles:
+        for (latitude, longitude, radius, height) in self.obsSubscriber.stationaryObstacles:
             pixelDiameter = math.ceil(2*220*radius/referenceDistance)
             heightDiff = height-UAV_height
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
             
-            painter.setPen(QPen(QBrush(Qt.red), 1, Qt.SolidLine, Qt.RoundCap))
+            painter.setPen(QPen(QBrush(Qt.red), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
             if (heightDiff < 0):
-                painter.setPen(QPen(QBrush(Qt.darkGreen), 1, Qt.SolidLine, Qt.RoundCap))
-            painter.drawEllipse(location, pixelDiameter, pixelDiameter)
-            painter.drawText(location, str(height))
+                painter.setPen(QPen(QBrush(Qt.darkGreen), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
+            painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
+            painter.setPen(QPen(QBrush(Qt.black), 1, Qt.SolidLine, Qt.RoundCap))
+            painter.drawText(location, str(math.floor(heightDiff)))
 
     def drawMovingObstacles(self, painter):
-        UAV_height = 100 # meters
+        UAV_height = self.gpsSubscriber.altitude # meters
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
         # Draw obstacles according to latlong degrees and height relative to the UAV
-        for (latitude, longitude, radius, height) in self.movingObstacles:
+        for (latitude, longitude, radius, height) in self.obsSubscriber.movingObstacles:
             heightDiff = height-UAV_height
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
             
             # Draw maximum radius of sphere in grey
             pixelDiameter = math.ceil(2*220*radius/referenceDistance)
-            painter.setPen(QPen(QBrush(Qt.gray), 1, Qt.SolidLine, Qt.RoundCap))
-            painter.drawEllipse(location, pixelDiameter, pixelDiameter)
-            painter.drawText(location, str(heightDiff)+ "("+str(radius)+")")
+            painter.setPen(QPen(QBrush(Qt.darkGreen), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
+            painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
             
             # Draw radius of sphere at current height in red (if applicable)
             # Calculate radius of sphere at current height
             if abs(heightDiff) < radius:
                 localRadius = math.sqrt(radius*radius - heightDiff*heightDiff)
                 pixelDiameter = math.ceil(2*220*localRadius/referenceDistance)
-                painter.setPen(QPen(QBrush(Qt.red), 1, Qt.SolidLine, Qt.RoundCap))
-                painter.drawEllipse(location, pixelDiameter, pixelDiameter)
+                painter.setPen(QPen(QBrush(Qt.red), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
+                painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
+            painter.setPen(QPen(QBrush(Qt.black), 1, Qt.SolidLine, Qt.RoundCap))
+            painter.drawText(location, str(math.floor(heightDiff))+ "("+str(math.floor(radius))+")")
 
 
 class MarbleMap(Marble.MarbleWidget):
