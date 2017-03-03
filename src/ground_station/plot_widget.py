@@ -5,14 +5,14 @@ import roslib
 from python_qt_binding import loadUi
 from python_qt_binding.QtCore import Qt, QTimer, qWarning, Slot
 from python_qt_binding.QtGui import QIcon
-from python_qt_binding.QtWidgets import QAction, QMenu, QWidget
+from python_qt_binding.QtWidgets import QAction, QMenu, QWidget, QMessageBox
 
 import rospy
 
-from rqt_py_common.topic_completer import TopicCompleter
 from rqt_py_common import topic_helpers
 
 from . rosplot import ROSData, RosPlotException
+PWD = os.path.dirname(os.path.abspath(__file__))
 
 def get_plot_fields(topic_name):
     topic_type, real_topic, _ = topic_helpers.get_topic_type(topic_name)
@@ -84,28 +84,34 @@ class PlotWidget(QWidget):
         super(PlotWidget, self).__init__()
         self.setObjectName('PlotWidget')
 
+        # Available ros topics for plotting
+        self.message_dict = {'Airspeed (m/s)':'/state/Va','Angle of attack (rad)':'/state/alpha','Slide slip angle (rad)':'/state/beta',
+                             'Roll angle (rad)':'/state/phi','Pitch angle (rad)':'/state/theta','Yaw angle (rad)':'/state/psi',
+                             'Course angle (rad)':'/state/chi','Body frame rollrate (rad/s)':'/state/p','Body frame pitchrate (rad/s)':'/state/q',
+                             'Body frame yawrate (rad/s)':'/state/r','Groundspeed (m/s)':'/state/Vg'}
+
         self._initial_topics = initial_topics
 
         rp = rospkg.RosPack()
-        ui_file = os.path.join(rp.get_path('rqt_plot'), 'resource', 'plot.ui')
+        ui_file = os.path.join(PWD, 'resources', 'plot.ui')
         loadUi(ui_file, self)
-        self.subscribe_topic_button.setIcon(QIcon.fromTheme('list-add'))
-        self.remove_topic_button.setIcon(QIcon.fromTheme('list-remove'))
+
         self.pause_button.setIcon(QIcon.fromTheme('media-playback-pause'))
         self.clear_button.setIcon(QIcon.fromTheme('edit-clear'))
         self.data_plot = None
 
-        self.subscribe_topic_button.setEnabled(False)
         if start_paused:
             self.pause_button.setChecked(True)
 
-        self._topic_completer = TopicCompleter(self.topic_edit)
-        self._topic_completer.update_topics()
-        self.topic_edit.setCompleter(self._topic_completer)
-
         self._start_time = rospy.get_time()
         self._rosdata = {}
+        self._current_topic = ''
         self._remove_topic_menu = QMenu()
+
+        self._msgs.clear()
+        self._msgs.addItems(self.message_dict.keys())
+
+        self._msgs.currentIndexChanged[str].connect(self._draw_graph)
 
         # init and start update timer for plot
         self._update_plot_timer = QTimer(self)
@@ -120,7 +126,7 @@ class PlotWidget(QWidget):
 
         self.data_plot = data_plot
         self.data_plot_layout.addWidget(self.data_plot)
-        self.data_plot.autoscroll(self.autoscroll_checkbox.isChecked())
+        self.data_plot.autoscroll(True)
 
         # setup drag 'n drop
         self.data_plot.dropEvent = self.dropEvent
@@ -137,65 +143,17 @@ class PlotWidget(QWidget):
 
         self._subscribed_topics_changed()
 
-    @Slot('QDragEnterEvent*')
-    def dragEnterEvent(self, event):
-        # get topic name
-        if not event.mimeData().hasText():
-            if not hasattr(event.source(), 'selectedItems') or len(event.source().selectedItems()) == 0:
-                qWarning('Plot.dragEnterEvent(): not hasattr(event.source(), selectedItems) or len(event.source().selectedItems()) == 0')
-                return
-            item = event.source().selectedItems()[0]
-            topic_name = item.data(0, Qt.UserRole)
-            if topic_name == None:
-                qWarning('Plot.dragEnterEvent(): not hasattr(item, ros_topic_name_)')
-                return
-        else:
-            topic_name = str(event.mimeData().text())
+    def _draw_graph(self):
+        plottable, message = is_plottable(self.message_dict[self._msgs.currentText()])
+        if self._current_topic: # if there's already a plotted topic
+            self.remove_topic(self._current_topic)
 
-        # check for plottable field type
-        plottable, message = is_plottable(topic_name)
-        if plottable:
-            event.acceptProposedAction()
-        else:
-            qWarning('Plot.dragEnterEvent(): rejecting: "%s"' % (message))
-
-    @Slot('QDropEvent*')
-    def dropEvent(self, event):
-        if event.mimeData().hasText():
-            topic_name = str(event.mimeData().text())
-        else:
-            droped_item = event.source().selectedItems()[0]
-            topic_name = str(droped_item.data(0, Qt.UserRole))
-        self.add_topic(topic_name)
-
-    @Slot(str)
-    def on_topic_edit_textChanged(self, topic_name):
-        # on empty topic name, update topics
-        if topic_name in ('', '/'):
-            self._topic_completer.update_topics()
-
-        plottable, message = is_plottable(topic_name)
-        self.subscribe_topic_button.setEnabled(plottable)
-        self.subscribe_topic_button.setToolTip(message)
-
-    @Slot()
-    def on_topic_edit_returnPressed(self):
-        if self.subscribe_topic_button.isEnabled():
-            self.add_topic(str(self.topic_edit.text()))
-
-    @Slot()
-    def on_subscribe_topic_button_clicked(self):
-        self.add_topic(str(self.topic_edit.text()))
+        self._current_topic = self.message_dict[self._msgs.currentText()]
+        self.add_topic(str(self.message_dict[self._msgs.currentText()]))
 
     @Slot(bool)
     def on_pause_button_clicked(self, checked):
         self.enable_timer(not checked)
-
-    @Slot(bool)
-    def on_autoscroll_checkbox_clicked(self, checked):
-        self.data_plot.autoscroll(checked)
-        if checked:
-            self.data_plot.redraw()
 
     @Slot()
     def on_clear_button_clicked(self):
@@ -236,8 +194,6 @@ class PlotWidget(QWidget):
             all_action = QAction('All', self._remove_topic_menu)
             all_action.triggered.connect(self.clean_up_subscribers)
             self._remove_topic_menu.addAction(all_action)
-
-        self.remove_topic_button.setMenu(self._remove_topic_menu)
 
     def add_topic(self, topic_name):
         topics_changed = False

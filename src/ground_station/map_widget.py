@@ -63,9 +63,7 @@ class MapWindow(QWidget):
         self._home_opts.addItems(list(map_coords))
         self._home_opts.setCurrentIndex(list(map_coords).index(map_info_parser.get_default()))
         self._home_opts.currentIndexChanged[str].connect(self._update_home)
-        plane_icon = QPixmap(button_icon_file)
-        self._plot_plane_button.setIcon(QIcon(plane_icon))
-        self._plot_plane_button.clicked.connect(self._start_plane)
+        self._start_plane()
 
         self.plane = Marble.GeoDataPlacemark("Plane")
         self.document = Marble.GeoDataDocument()
@@ -85,7 +83,12 @@ class MapWindow(QWidget):
         self.connect(self.threadFirst, SIGNAL("started()"), self.firstWorker.startWork)
         self.connect(self.threadFirst, SIGNAL("finished()"), self.firstWorker.finishWork)
 
+        #self.connect(self.plane, SIGNAL("destroyed()"), self.handleNewPlane)
+
         self.threadFirst.start()
+
+    def handleNewPlane(self):
+        print("plane deleted, yo.")
 
     def setPlaneCoordinates(self, coord):
         self.plane.setCoordinate(coord)
