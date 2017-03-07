@@ -8,6 +8,7 @@ from .map_widget import MapWindow
 from .plot_widget import PlotWidget
 from .data_plot import DataPlot
 from .control_widget import ControlWindow
+from .artificial_horizon import ArtificialHorizon
 
 class GroundStationWidget(QWidget):
 
@@ -34,9 +35,9 @@ class GroundStationWidget(QWidget):
         self._data_plot.set_xlim([0, 10.0])
         self._tv.switch_data_plot_widget(self._data_plot)
 
-        self._control_layout.addWidget(self._tv, 2) # ratio of these numbers determines window proportions
-        self._cw = ControlWindow()
-        self._control_layout.addWidget(self._cw, 1)
+        self._control_layout.addWidget(self._tv, 1) # ratio of these numbers determines window proportions
+        self._ah = ArtificialHorizon()
+        self._control_layout.addWidget(self._ah, 1)
         #=============================
         print('fake init')
 
