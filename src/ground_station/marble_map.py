@@ -34,6 +34,7 @@ class GPSSubscriber():
 class ObstaclesSubscriber():
     def __init__(self):
         self.stationaryObstacles = []
+        self.movingObstacles = []
         rospy.Subscriber("/obstacles", Obstacles, self.callback)
 
     def callback(self, obstacles):
