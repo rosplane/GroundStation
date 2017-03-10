@@ -2,11 +2,11 @@ from PyKDE4.marble import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import os.path
-import math
+from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
 
 import map_info_parser
 import rospy
-from fcu_common.msg import GPS, Obstacles, Obstacle
+from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
 
 '''
 For changing color of current waypoint to green:
@@ -16,6 +16,7 @@ MarbleMap() class]],
 and have PaintLayer have an internal state-subscriber-like class whose data member
 of current waypoint is always updating.
 '''
+
 class GPSSubscriber():
     def __init__(self):
         # subscribing to fcu_common/GPS to get plane latitude and longitude
@@ -23,7 +24,6 @@ class GPSSubscriber():
         self.lon = 0.0
         self.altitude = 0.0
         rospy.Subscriber("/gps/data", GPS, self.callback)
-        
         #rospy.Subscriber("/waypoint_path", FW_Waypoint, self.callback_waypoints)
 
     def callback(self, gps):
@@ -54,6 +54,17 @@ class ObstaclesSubscriber():
             height = obstacle.height
             self.movingObstacles.append((lat, lon, radius, height))
 
+class StateSubscriber(): # For rendering rotated plane onto marble widget
+    def __init__(self):
+        self.pe = 0.0
+        self.pn = 0.0
+        self.psi = 0.0
+        rospy.Subscriber("/junker/truth", FW_State, self.callback)
+
+    def callback(self, state):
+        self.pe = state.position[1]
+        self.pn = state.position[0]
+        self.psi = state.psi
 
 # Class for allowing the widget to paint to the marble map
 class PaintLayer(Marble.LayerInterface, QObject):
@@ -62,27 +73,91 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.marble = marble
         self._home_map = self.marble._home_map
         self.waypoints = map_info_parser.get_waypoints(self._home_map)
+
         self.gpsSubscriber = GPSSubscriber()
         self.obsSubscriber = ObstaclesSubscriber()
-        # subscriber class +++++++++++++++++++++++++++++++++++
+        self.stateSubscriber = StateSubscriber()
 
-    def renderPosition(self): # ??
+        # For meters to GPS conversion and plane geometry
+        self.latlon = map_info_parser.get_latlon(self._home_map)
+        self.R = 6371000.0           # Radius of earth in meters
+        self.R_prime = cos(radians(self.latlon[0]))*self.R
+        self.h = 20
+        self.w = 20
+
+    def deToLat(self, de):
+        return self.latlon[0] + degrees(asin(de/self.R))
+
+    def dnToLon(self, dn):
+        return self.latlon[1] + degrees(asin(dn/self.R_prime))
+
+    def renderPosition(self): # So that Marble knows where to paint
         return ['SURFACE']
 
     def render(self, painter, viewPort, renderPos, layer):
         painter.m_index = 0 # should provide a surface paint
         painter.setRenderHint(QPainter.Antialiasing, True)
+        self._home_map = self.marble._home_map
         self.drawWaypoints(painter)
         # Don't draw these if it's too zoomed out
-        if (self.marble.zoom() > 2700): 
+        if (self.marble.zoom() > 2700):
             self.drawStationaryObstacles(painter)
             self.drawMovingObstacles(painter)
+        self.drawPlane(painter) # Plane on top of all other items in drawing
         return True
+
+    def rotate_x(self, x, y, a):
+        return x * cos(a) + y * sin(a)
+
+    def rotate_y(self, x, y, a):
+        return -1 * x * sin(a) + y * cos(a)
+
+    def drawPlane(self, painter):
+        painter.setPen(QPen(QBrush(Qt.black), 3.5, Qt.SolidLine, Qt.RoundCap))
+        self.latlon = map_info_parser.get_latlon(self._home_map)
+        self.R_prime = cos(radians(self.latlon[0]))*self.R
+        de = self.stateSubscriber.pe
+        dn = self.stateSubscriber.pn
+        psi = self.stateSubscriber.psi
+
+        # Draw Plane Lines with pts 1-7
+        referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())
+        scaled_h = ceil(6*self.h*referenceDistance)
+        scaled_w = ceil(6*self.w*referenceDistance)
+        #pt_1 = [de, dn + scaled_h/2]
+        #pt_2 = [de, dn - scaled_h/2]
+        pt_1 = [de + self.rotate_x(0, scaled_h/2, psi), dn + self.rotate_y(0, scaled_h/2, psi)]
+        pt_2 = [de + self.rotate_x(0, -scaled_h/2, psi), dn + self.rotate_y(0, -scaled_h/2, psi)]
+        line_1 = Marble.GeoDataLineString()
+        line_1.append(Marble.GeoDataCoordinates(self.dnToLon(pt_1[1]), self.deToLat(pt_1[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_1.append(Marble.GeoDataCoordinates(self.dnToLon(pt_2[1]), self.deToLat(pt_2[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        pt_3 = [de, dn]
+        #pt_4 = [de - scaled_w/2, dn - scaled_h/4]
+        #pt_5 = [de + scaled_w/2, dn - scaled_h/4]
+        pt_4 = [de + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
+        pt_5 = [de + self.rotate_x(scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
+        line_2 = Marble.GeoDataLineString()
+        line_2.append(Marble.GeoDataCoordinates(self.dnToLon(pt_3[1]), self.deToLat(pt_3[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_2.append(Marble.GeoDataCoordinates(self.dnToLon(pt_4[1]), self.deToLat(pt_4[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_3 = Marble.GeoDataLineString()
+        line_3.append(Marble.GeoDataCoordinates(self.dnToLon(pt_3[1]), self.deToLat(pt_3[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_3.append(Marble.GeoDataCoordinates(self.dnToLon(pt_5[1]), self.deToLat(pt_5[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        #pt_6 = [de - scaled_w/4, dn - 2*scaled_h/5]
+        #pt_7 = [de + scaled_w/4, dn - 2*scaled_h/5]
+        pt_6 = [de + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
+        pt_7 = [de + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
+        line_4 = Marble.GeoDataLineString()
+        line_4.append(Marble.GeoDataCoordinates(self.dnToLon(pt_6[1]), self.deToLat(pt_6[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_4.append(Marble.GeoDataCoordinates(self.dnToLon(pt_7[1]), self.deToLat(pt_7[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+
+        painter.drawPolyline(line_1)
+        painter.drawPolyline(line_2)
+        painter.drawPolyline(line_3)
+        painter.drawPolyline(line_4)
 
     def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
         # Draw waypoints according to latlong degrees for current map
-        self._home_map = self.marble._home_map
         self.waypoints = map_info_parser.get_waypoints(self._home_map)
 
         for waypoint in self.waypoints:
@@ -95,16 +170,16 @@ class PaintLayer(Marble.LayerInterface, QObject):
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
         # Draw obstacles according to latlong degrees and height relative to the UAV
         for (latitude, longitude, radius, height) in self.obsSubscriber.stationaryObstacles:
-            pixelDiameter = math.ceil(2*220*radius/referenceDistance)
+            pixelDiameter = ceil(2*220*radius/referenceDistance)
             heightDiff = height-UAV_height
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
-            
+
             painter.setPen(QPen(QBrush(Qt.red), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
             if (heightDiff < 0):
                 painter.setPen(QPen(QBrush(Qt.darkGreen), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
             painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
             painter.setPen(QPen(QBrush(Qt.black), 1, Qt.SolidLine, Qt.RoundCap))
-            painter.drawText(location, str(math.floor(heightDiff)))
+            painter.drawText(location, str(floor(heightDiff)))
 
     def drawMovingObstacles(self, painter):
         UAV_height = self.gpsSubscriber.altitude # meters
@@ -113,21 +188,21 @@ class PaintLayer(Marble.LayerInterface, QObject):
         for (latitude, longitude, radius, height) in self.obsSubscriber.movingObstacles:
             heightDiff = height-UAV_height
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
-            
+
             # Draw maximum radius of sphere in grey
-            pixelDiameter = math.ceil(2*220*radius/referenceDistance)
+            pixelDiameter = ceil(2*220*radius/referenceDistance)
             painter.setPen(QPen(QBrush(Qt.darkGreen), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
             painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
-            
+
             # Draw radius of sphere at current height in red (if applicable)
             # Calculate radius of sphere at current height
             if abs(heightDiff) < radius:
-                localRadius = math.sqrt(radius*radius - heightDiff*heightDiff)
-                pixelDiameter = math.ceil(2*220*localRadius/referenceDistance)
+                localRadius = sqrt(radius*radius - heightDiff*heightDiff)
+                pixelDiameter = ceil(2*220*localRadius/referenceDistance)
                 painter.setPen(QPen(QBrush(Qt.red), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
                 painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
             painter.setPen(QPen(QBrush(Qt.black), 1, Qt.SolidLine, Qt.RoundCap))
-            painter.drawText(location, str(math.floor(heightDiff))+ "("+str(math.floor(radius))+")")
+            painter.drawText(location, str(floor(heightDiff))+ "("+str(floor(radius))+")")
 
 
 class MarbleMap(Marble.MarbleWidget):
@@ -152,12 +227,6 @@ class MarbleMap(Marble.MarbleWidget):
         paintlayer = PaintLayer(self)
         self.addLayer(paintlayer)
 
-        #rospy.Subscriber("/waypoint_path", FW_Waypoint, self.callback_waypoints)
-        # waypoint buffers
-        #self.wp_pn_data = np.array([])
-        #self.wp_pe_data = np.array([])
-        #self._curr_wp = self._home_pt
-
     def change_home(self, map_name):
         latlonzoom = self._map_coords[map_name]
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
@@ -168,15 +237,3 @@ class MarbleMap(Marble.MarbleWidget):
 
     def get_home(self):
         return self._home_pt
-
-    #def callback_waypoints(self, FW_Waypoint):
-    #    self.wp_pn_data = np.append(self.wp_pn_data, FW_Waypoint.w[0])
-    #    self.wp_pe_data = np.append(self.wp_pe_data, FW_Waypoint.w[1])
-        # shaky conversion going on here ++++++++++++++++++++++++++++++
-    #    lat = self._home_pt.latitude(Marble.GeoDataCoordinates.Degree) + self.wp_pe_data[-1]/111111.0;
-    #    lon = self._home_pt.longitude(Marble.GeoDataCoordinates.Degree) + self.wp_pn_data[-1]/111111.0;
-    #    self._curr_wp = Marble.GeoDataCoordinates(lon, lat, 0.0, Marble.GeoDataCoordinates.Degree)
-    #    self.painter.setPen(Qt.blue)
-    #    self.painter.drawEllipse(self._curr_wp, 0.2, 0.2)
-        #self.customPaint() nope
-    #    print(len(self.wp_pn_data))#-----------------------------------------------

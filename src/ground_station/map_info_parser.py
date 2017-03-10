@@ -19,6 +19,13 @@ def get_gps_dict():
         gps_dict[name] = [lat, lon, zoom]
     return gps_dict
 
+def get_latlon(map_name):
+    xmlroot = ET.parse(INFO_FILE_PATH).getroot()
+    mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
+    lat = float(str(mapnode.find('lat').text))
+    lon = float(str(mapnode.find('lon').text))
+    return [lat, lon]
+
 def get_waypoints(map_name):
     xmlroot = ET.parse(INFO_FILE_PATH).getroot()
     mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
