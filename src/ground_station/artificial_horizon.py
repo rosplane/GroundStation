@@ -1,7 +1,8 @@
-import sys, math, rospy
+import sys, math, rospy, random
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
 from PyQt4.QtGui import QColor, QBrush, QPen, QFont, QPolygon
+from fcu_common.msg import FW_State
 
 class ArtificialHorizon(QtGui.QWidget):
     def __init__(self):
@@ -11,6 +12,8 @@ class ArtificialHorizon(QtGui.QWidget):
     def initUI(self):
         self.height = 600
         self.width = 600
+
+        self.count = 0
         
         self.roll = 0     # degrees
         self.pitch = 0    # degrees
@@ -23,11 +26,22 @@ class ArtificialHorizon(QtGui.QWidget):
         self.setGeometry(300, 300, self.width, self.height)
         self.setWindowTitle('Artificial Horizon')
         self.addSubscribers()
-        self.addSliders()
+        # self.addSliders()
         self.show()
 
     def addSubscribers(self):
-        pass  
+        rospy.Subscriber("/junker/truth", FW_State, self.subscriberCallback)
+    
+    def subscriberCallback(self, state):
+        self.count += 1
+        if self.count > 100:
+            self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
+            self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
+            self.heading =  int (math.floor(state.psi*(180.0/math.pi)))
+            self.speed =    int (math.floor(state.Va*1.94384))
+            self.altitude = int (math.floor(state.position[2]*(-3.28084)))
+            self.update()
+            self.count = 0
 
     def resizeEvent(self, newSize):
         self.width = newSize.size().width()
@@ -36,25 +50,17 @@ class ArtificialHorizon(QtGui.QWidget):
     def paintEvent(self, event):
         painter = QtGui.QPainter()
         painter.begin(self)
-        self.drawBackground(event, painter)
-        # self.drawText(event, painter)
+        self.drawArtificialHorizon(event, painter)
         painter.end()
-        # print(painter.worldTransform())
 
-    def drawBackground(self, event, painter):
-        # Draw Background
-        brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)
-        painter.fillRect(QRectF(0,0,self.width, self.height), brush)
+    def drawArtificialHorizon(self, event, painter):
+        self.drawSky(event, painter)
+        self.drawGround(event, painter)
 
         painter.translate(self.width/2, self.height/2)
-        painter.rotate(self.roll)
+        painter.rotate(-self.roll)
         painter.translate(-self.width/2, -self.height/2)
         painter.translate(0,self.height*(self.pitch*self.pitchInterval))
-
-        brush = QtGui.QBrush(QtGui.QColor(84, 54, 10), QtCore.Qt.SolidPattern)
-        painter.fillRect(QRectF(-300,self.height/2,self.width+600, self.height*(0.5+self.pitchInterval*180)), brush)
-        painter.setPen(QPen(QBrush(Qt.white), 2, Qt.SolidLine, Qt.RoundCap))
-        painter.drawLine(-300,self.height/2,self.width+600,self.height/2)
 
         self.drawPitchIndicator(event, painter)
         
@@ -63,13 +69,23 @@ class ArtificialHorizon(QtGui.QWidget):
         self.drawTurnIndicator(event, painter)
 
         painter.translate(self.width/2, self.height/2)
-        painter.rotate(self.roll*-1)
+        painter.rotate(self.roll)
         painter.translate(-self.width/2, -self.height/2)
 
         self.drawAircraftSymbol(event, painter)
         self.drawAirspeedIndicator(event, painter)
         self.drawAltitudeIndicator(event, painter)
         self.drawHeadingIndicator(event, painter)
+
+    def drawSky(self, event, painter):
+        brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)
+        painter.fillRect(QRectF(0,0,self.width, self.height), brush)
+    
+    def drawGround(self, event, painter):
+        brush = QtGui.QBrush(QtGui.QColor(84, 54, 10), QtCore.Qt.SolidPattern)
+        painter.fillRect(QRectF(-300,self.height/2,self.width+600, self.height*(0.5+self.pitchInterval*180)), brush)
+        painter.setPen(QPen(QBrush(Qt.white), 2, Qt.SolidLine, Qt.RoundCap))
+        painter.drawLine(-300,self.height/2,self.width+600,self.height/2)
 
     def drawHeadingIndicator(self, event, painter):
         boxWidth = self.width*1.0
@@ -78,6 +94,9 @@ class ArtificialHorizon(QtGui.QWidget):
         painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine))
         painter.fillRect(QRectF((self.width-boxWidth)/2,self.height-boxHeight,boxWidth,boxHeight),brush)
 
+        if self.heading < 0: 
+            self.heading += 360
+            
         directions = {0:"N",45:"NE",90:"E",135:"SE",180:"S",215:"SW",270:"W",315:"NW"}
         scale = 0.01
         for i in range(self.heading-49,self.heading+49):
@@ -208,13 +227,13 @@ class ArtificialHorizon(QtGui.QWidget):
             QPoint(x+height/2,y+height),])
 
         painter.translate(xCenter,yCenter)
-        painter.rotate(-self.roll)
+        painter.rotate(self.roll)
         painter.translate(-xCenter,-yCenter)
 
         painter.drawPolygon(poly)
 
         painter.translate(xCenter,yCenter)
-        painter.rotate(self.roll)
+        painter.rotate(-self.roll)
         painter.translate(-xCenter,-yCenter)
         
 
