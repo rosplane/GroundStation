@@ -55,13 +55,13 @@ class ArtificialHorizon(QtGui.QWidget):
 
     def drawArtificialHorizon(self, event, painter):
         self.drawSky(event, painter)
-        self.drawGround(event, painter)
-
+        
         painter.translate(self.width/2, self.height/2)
         painter.rotate(-self.roll)
         painter.translate(-self.width/2, -self.height/2)
         painter.translate(0,self.height*(self.pitch*self.pitchInterval))
 
+        self.drawGround(event, painter)
         self.drawPitchIndicator(event, painter)
         
         painter.translate(0,self.height*(-1*self.pitch*self.pitchInterval))
@@ -86,6 +86,7 @@ class ArtificialHorizon(QtGui.QWidget):
         painter.fillRect(QRectF(-300,self.height/2,self.width+600, self.height*(0.5+self.pitchInterval*180)), brush)
         painter.setPen(QPen(QBrush(Qt.white), 2, Qt.SolidLine, Qt.RoundCap))
         painter.drawLine(-300,self.height/2,self.width+600,self.height/2)
+    
 
     def drawHeadingIndicator(self, event, painter):
         boxWidth = self.width*1.0
