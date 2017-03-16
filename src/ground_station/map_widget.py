@@ -4,12 +4,12 @@ from PyKDE4.marble import *
 
 from .manage_kml import ManageKML
 from .marble_map import MarbleMap
+from .wp_window import WpWindow
 import map_info_parser
 import os
 
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
-from python_qt_binding.QtGui import QIcon, QPixmap
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 
@@ -20,6 +20,7 @@ class MapWindow(QWidget):
         ui_file = os.path.join(PWD, 'resources', uifname)
         loadUi(ui_file, self, {'MarbleMap' : MarbleMap})
         # there is now a self._marble_map, and there can only be one
+        #self._marble_map.inputHandler.setMouseButtonPopupEnabled(Qt.RightButton, False)
         self.setObjectName(uifname)
         self.interval = 100     # in milliseconds, period of regular update
         self.timer = QTimer(self)
@@ -33,12 +34,22 @@ class MapWindow(QWidget):
         self._home_opts.currentIndexChanged[str].connect(self._update_home)
 
         self.init_manage_kml()
+        self.init_wp_window()
         self.timer.start()
-    
+
     def init_manage_kml(self):
         self.manageKML = ManageKML(self._marble_map)
         self._manage_KML.clicked.connect(self.manageKML.display_manage_KML_modal)
         self.manageKML.add_default_KML_files()
+
+    def init_wp_window(self):
+        self.wpWindow = WpWindow(self._marble_map)
+        self._send_WP.clicked.connect(self.open_wp_window)
+
+    def open_wp_window(self):
+        self._marble_map.setInputEnabled(False)
+        self._marble_map._mouse_attentive = True
+        self.wpWindow.show()
 
     def _update_home(self):
         self._marble_map.change_home(self._home_opts.currentText())

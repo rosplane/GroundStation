@@ -7,6 +7,7 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
 import map_info_parser
 import rospy
 from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
+from Signals import WP_Handler
 
 '''
 For changing color of current waypoint to green:
@@ -72,6 +73,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         QObject.__init__(self)
         self.marble = marble
         self._home_map = self.marble._home_map
+        # This list must be kept in sync with the plane's on-board waypoint queue
         self.waypoints = map_info_parser.get_waypoints(self._home_map)
 
         self.gpsSubscriber = GPSSubscriber()
@@ -79,17 +81,35 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.stateSubscriber = StateSubscriber()
 
         # For meters to GPS conversion and plane geometry
+        # specifically starting lat, lon of the plane
         self.latlon = map_info_parser.get_latlon(self._home_map)
         self.R = 6371000.0           # Radius of earth in meters
         self.R_prime = cos(radians(self.latlon[0]))*self.R
         self.h = 20
         self.w = 20
 
-    def deToLat(self, de):
-        return self.latlon[0] + degrees(asin(de/self.R))
+        # For signal handling
+        self.marble.WPH.wp_inserted.connect(self.add_waypoint)
+        self.marble.WPH.wp_removed.connect(self.remove_waypoint)
+        self.marble.WPH.home_changed.connect(self.change_home)
 
-    def dnToLon(self, dn):
-        return self.latlon[1] + degrees(asin(dn/self.R_prime))
+    def add_waypoint(self, lat, lon, alt, pos):
+        self.waypoints.insert(pos, (lat, lon, alt))
+
+    def remove_waypoint(self, pos):
+        del self.waypoints[pos]
+
+    def change_home(self, new_home):
+        self.waypoints = map_info_parser.get_waypoints(new_home)
+        self.latlon = map_info_parser.get_latlon(new_home)
+        self.R_prime = cos(radians(self.latlon[0]))*self.R
+        self._home_map = new_home
+
+    def dnToLat(self, dn):
+        return self.latlon[0] + degrees(asin(dn/self.R))
+
+    def deToLon(self, de):
+        return self.latlon[1] + degrees(asin(de/self.R_prime))
 
     def renderPosition(self): # So that Marble knows where to paint
         return ['SURFACE']
@@ -97,7 +117,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def render(self, painter, viewPort, renderPos, layer):
         painter.m_index = 0 # should provide a surface paint
         painter.setRenderHint(QPainter.Antialiasing, True)
-        self._home_map = self.marble._home_map
+        #self._home_map = self.marble._home_map
         self.drawWaypoints(painter)
         # Don't draw these if it's too zoomed out
         if (self.marble.zoom() > 2700):
@@ -114,8 +134,8 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def drawPlane(self, painter):
         painter.setPen(QPen(QBrush(Qt.black), 3.5, Qt.SolidLine, Qt.RoundCap))
-        self.latlon = map_info_parser.get_latlon(self._home_map)
-        self.R_prime = cos(radians(self.latlon[0]))*self.R
+        #self.latlon = map_info_parser.get_latlon(self._home_map)
+        #self.R_prime = cos(radians(self.latlon[0]))*self.R
         de = self.stateSubscriber.pe
         dn = self.stateSubscriber.pn
         psi = self.stateSubscriber.psi
@@ -129,26 +149,26 @@ class PaintLayer(Marble.LayerInterface, QObject):
         pt_1 = [de + self.rotate_x(0, scaled_h/2, psi), dn + self.rotate_y(0, scaled_h/2, psi)]
         pt_2 = [de + self.rotate_x(0, -scaled_h/2, psi), dn + self.rotate_y(0, -scaled_h/2, psi)]
         line_1 = Marble.GeoDataLineString()
-        line_1.append(Marble.GeoDataCoordinates(self.dnToLon(pt_1[1]), self.deToLat(pt_1[0]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_1.append(Marble.GeoDataCoordinates(self.dnToLon(pt_2[1]), self.deToLat(pt_2[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_1[0]), self.dnToLat(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_2[0]), self.dnToLat(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
         pt_3 = [de, dn]
         #pt_4 = [de - scaled_w/2, dn - scaled_h/4]
         #pt_5 = [de + scaled_w/2, dn - scaled_h/4]
         pt_4 = [de + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
         pt_5 = [de + self.rotate_x(scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
         line_2 = Marble.GeoDataLineString()
-        line_2.append(Marble.GeoDataCoordinates(self.dnToLon(pt_3[1]), self.deToLat(pt_3[0]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_2.append(Marble.GeoDataCoordinates(self.dnToLon(pt_4[1]), self.deToLat(pt_4[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_4[0]), self.dnToLat(pt_4[1]), 0.0, Marble.GeoDataCoordinates.Degree))
         line_3 = Marble.GeoDataLineString()
-        line_3.append(Marble.GeoDataCoordinates(self.dnToLon(pt_3[1]), self.deToLat(pt_3[0]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_3.append(Marble.GeoDataCoordinates(self.dnToLon(pt_5[1]), self.deToLat(pt_5[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_5[0]), self.dnToLat(pt_5[1]), 0.0, Marble.GeoDataCoordinates.Degree))
         #pt_6 = [de - scaled_w/4, dn - 2*scaled_h/5]
         #pt_7 = [de + scaled_w/4, dn - 2*scaled_h/5]
         pt_6 = [de + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
         pt_7 = [de + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
         line_4 = Marble.GeoDataLineString()
-        line_4.append(Marble.GeoDataCoordinates(self.dnToLon(pt_6[1]), self.deToLat(pt_6[0]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_4.append(Marble.GeoDataCoordinates(self.dnToLon(pt_7[1]), self.deToLat(pt_7[0]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_6[0]), self.dnToLat(pt_6[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+        line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_7[0]), self.dnToLat(pt_7[1]), 0.0, Marble.GeoDataCoordinates.Degree))
 
         painter.drawPolyline(line_1)
         painter.drawPolyline(line_2)
@@ -157,9 +177,8 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
-        # Draw waypoints according to latlong degrees for current map
-        self.waypoints = map_info_parser.get_waypoints(self._home_map)
 
+        # Draw waypoints according to latlong degrees for current map
         for waypoint in self.waypoints:
             location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
@@ -217,18 +236,63 @@ class MarbleMap(Marble.MarbleWidget):
         self.setProjection(Marble.Mercator)
         self.setShowOverviewMap(False)
 
+        self.WPH = WP_Handler()
+
         self._home_map = map_info_parser.get_default()
         self._map_coords = map_info_parser.get_gps_dict()
         def_latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(def_latlonzoom[1], def_latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree) # +
         self.centerOn(self._home_pt)
         self.setZoom(def_latlonzoom[2])
-
+        self._mouse_attentive = False
         paintlayer = PaintLayer(self)
         self.addLayer(paintlayer)
+        self.seconds_tests = [2.0/3600, 5.0/3600, 15.0/3600, 30.0/3600, 60.0/3600]
+        self.num_s_tests = len(self.seconds_tests)
+
+    def mousePressEvent(self, QMouseEvent): # only use if popup window is open===============
+        if self._mouse_attentive:
+            q_mouse_pos = QMouseEvent.pos()
+            q_mouse_x = q_mouse_pos.x()
+            q_mouse_y = q_mouse_pos.y()
+
+            frame_geom = self.frameGeometry().getCoords()
+            w_width = frame_geom[2] - frame_geom[0]
+            w_height = frame_geom[3] - frame_geom[1]
+
+            lat = self.centerLatitude()
+            lon = self.centerLongitude()
+            # Can check 2, 5, 15, 30 60 seconds, use first one that has a pixel difference from
+            # center greater than 15 px with screenCoordinates()
+            x = 0.0
+            y = 0.0
+            i = 0
+            found = False
+
+            while not found and i < self.num_s_tests:
+                coord_tuple = self.screenCoordinates(lon + self.seconds_tests[i],
+                                                     lat + self.seconds_tests[i])
+                found = coord_tuple[0]                          # Check if too far
+                if (abs(coord_tuple[1] - w_width/2) < 10):      # Check if too close
+                    found = False
+                if found:
+                    x = abs(coord_tuple[1] - w_width/2)
+                    y = abs(coord_tuple[2] - w_height/2)
+                else:
+                    i += 1
+
+            if found: # Compute latlon from pixel
+                x_offset = q_mouse_x - w_width / 2 # number of pixels to the east of center
+                y_offset = w_height / 2 - q_mouse_y # number of pixels to the north of center
+                clicked_lon = lon + x_offset*self.seconds_tests[i]/x
+                clicked_lat = lat + y_offset*self.seconds_tests[i]/y
+                self.WPH.emit_clicked(clicked_lat, clicked_lon)
+            else: # Do nothing ===========================
+                print 'Not found. Zoom in!'
 
     def change_home(self, map_name):
         latlonzoom = self._map_coords[map_name]
+        self.WPH.emit_home_change(map_name)
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
