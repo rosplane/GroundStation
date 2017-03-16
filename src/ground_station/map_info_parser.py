@@ -19,9 +19,32 @@ def get_gps_dict():
         gps_dict[name] = [lat, lon, zoom]
     return gps_dict
 
-def get_waypoints(map_name):
+def get_latlon(map_name):
     xmlroot = ET.parse(INFO_FILE_PATH).getroot()
     mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
-    if not mapnode.find('wp') is None:
-        return eval(mapnode.find('wp').text.strip())
+    if (not mapnode.find('start_lat') is None) and (not mapnode.find('start_lon')):
+        lat = float(str(mapnode.find('start_lat').text))
+        lon = float(str(mapnode.find('start_lon').text))
+    else:
+        lat = float(str(mapnode.find('lat').text))
+        lon = float(str(mapnode.find('lon').text))
+    return [lat, lon]
+
+def get_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data', '%s_wp_data.txt' % map_name)
+    if os.path.exists(wp_file_path):
+        wp_list = []
+        with open(wp_file_path, 'r') as wp_file:
+            for line in wp_file:
+                wp_t = line.split(' ')
+                lat = float(wp_t[0])
+                lon = float(wp_t[1])
+                alt = float(wp_t[2])
+                wp_list.append((lat, lon, alt))
+        return wp_list
+    else:
+        xmlroot = ET.parse(INFO_FILE_PATH).getroot()
+        mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
+        if not mapnode.find('wp') is None:
+            return eval(mapnode.find('wp').text.strip())
     return []
