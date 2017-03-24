@@ -8,6 +8,7 @@ import map_info_parser
 import rospy
 from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
 from Signals import WP_Handler
+from .Geo import Geobase
 
 '''
 For changing color of current waypoint to green:
@@ -82,7 +83,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
         # For meters to GPS conversion and plane geometry
         # specifically starting lat, lon of the plane
-        self.latlon = map_info_parser.get_latlon(self._home_map)
+        self.latlon = self.marble.latlon
         self.R = 6371000.0           # Radius of earth in meters
         self.R_prime = cos(radians(self.latlon[0]))*self.R
         self.h = 20
@@ -101,7 +102,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def change_home(self, new_home):
         self.waypoints = map_info_parser.get_waypoints(new_home)
-        self.latlon = map_info_parser.get_latlon(new_home)
+        self.latlon = self.marble.latlon
         self.R_prime = cos(radians(self.latlon[0]))*self.R
         self._home_map = new_home
 
@@ -237,8 +238,11 @@ class MarbleMap(Marble.MarbleWidget):
         self.setShowOverviewMap(False)
 
         self.WPH = WP_Handler()
-
+        # For waypoint conversion
         self._home_map = map_info_parser.get_default()
+        self.latlon = map_info_parser.get_latlon(self._home_map)
+        self.GB = Geobase(self.latlon[0], self.latlon[1])
+
         self._map_coords = map_info_parser.get_gps_dict()
         def_latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(def_latlonzoom[1], def_latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree) # +
@@ -292,12 +296,14 @@ class MarbleMap(Marble.MarbleWidget):
 
     def change_home(self, map_name):
         latlonzoom = self._map_coords[map_name]
-        self.WPH.emit_home_change(map_name)
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
+        self.latlon = map_info_parser.get_latlon(self._home_map)
+        self.GB = Geobase(self.latlon[0], self.latlon[1])
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
         self._home_map = map_name
         self.update()
+        self.WPH.emit_home_change(map_name)
 
     def get_home(self):
         return self._home_pt

@@ -9,8 +9,27 @@ except ImportError:
 
 import os
 import map_info_parser
+import rospy
+from fcu_common.msg import FW_Waypoint
 
 PWD = os.path.dirname(os.path.abspath(__file__))
+
+class WP_Publisher():
+    def __init__(self):
+        self.pub = rospy.Publisher('/waypoint_path', FW_Waypoint, queue_size=50)
+        #rospy.init_node('publish_wp_to_plane', anonymous=True)
+        #self.rate = rospy.Rate(10)
+
+    def publish_wp_to_plane(self, wp):
+        wp_obj = FW_Waypoint()
+        wp_obj.w[0] = wp[0]
+        wp_obj.w[1] = wp[1]
+        wp_obj.w[2] = wp[2]
+        wp_obj.chi_d = 0.0 #?
+        wp_obj.chi_valid = False
+        wp_obj.Va_d = 30.0
+        wp_obj.set_current = False #?
+        self.pub.publish(wp_obj)
 
 class WpWindow(QWidget):
     def __init__(self, _marble_map, uifname = 'wp_window.ui'):
@@ -37,6 +56,8 @@ class WpWindow(QWidget):
         self._marble_map.WPH.wp_clicked.connect(self.clicked_waypoint)
         self._marble_map.WPH.home_changed.connect(self.change_home)
 
+        self.WPP = WP_Publisher()
+
     def load_wp_file(self):
         filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open File', '.')[0])
         if not filename.strip() == '':
@@ -55,6 +76,7 @@ class WpWindow(QWidget):
                 self.update_lists()
                 for i, wp in enumerate(self.waypoints):
                     self._marble_map.WPH.emit_inserted(wp[0], wp[1], wp[2], i)
+                self.transfer_waypoint_data()
             except:
                 print('Invalid waypoint file selected. Ensure that format is correct.')
 
@@ -75,10 +97,17 @@ class WpWindow(QWidget):
                 wp_file.write('%f %f %f\n' % (wp[0], wp[1], wp[2]))
 
     def transfer_waypoint_data(self):
-        print('transfer functionality pending')
-        # ...
-        # ...
-        # ...
+        wp_file_path = os.path.join(PWD, 'resources', 'wp_data', '%s_wp_data.txt' % self._home_map)
+        self.save_waypoints()
+        with open(wp_file_path, 'r') as wp_file:
+            self.WPP.publish_wp_to_plane([-9999,-9999,-9999]) # "Reset" wp
+            for line in wp_file:
+                wp_t = line.split()
+                lat = float(wp_t[0])
+                lon = float(wp_t[1])
+                alt = float(wp_t[2])
+                meter_data = self._marble_map.GB.gps_to_ned(lat, lon, alt/3.281)
+                self.WPP.publish_wp_to_plane(meter_data)
 
     def add_waypoint(self):
         # Check PARAMS and emit signal
