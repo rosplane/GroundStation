@@ -54,6 +54,19 @@
        </property>
       </widget>
      </item>
+     <item>
+      <widget class="QPushButton" name="_special_commands">
+       <property name="maximumSize">
+        <size>
+         <width>150</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Send Commands</string>
+       </property>
+      </widget>
+     </item>
    </layout>
  </item>
      <item>

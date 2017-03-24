@@ -36,15 +36,11 @@ def get_waypoints(map_name):
         wp_list = []
         with open(wp_file_path, 'r') as wp_file:
             for line in wp_file:
-                wp_t = line.split(' ')
+                wp_t = line.split()
                 lat = float(wp_t[0])
                 lon = float(wp_t[1])
                 alt = float(wp_t[2])
                 wp_list.append((lat, lon, alt))
         return wp_list
     else:
-        xmlroot = ET.parse(INFO_FILE_PATH).getroot()
-        mapnode = [ node for node in xmlroot.findall('map') if node.attrib['name'] == map_name ][0]
-        if not mapnode.find('wp') is None:
-            return eval(mapnode.find('wp').text.strip())
-    return []
+        return []

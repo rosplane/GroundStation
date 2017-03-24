@@ -5,6 +5,7 @@ from PyKDE4.marble import *
 from .manage_kml import ManageKML
 from .marble_map import MarbleMap
 from .wp_window import WpWindow
+from .cm_window import CmWindow
 import map_info_parser
 import os
 
@@ -35,6 +36,7 @@ class MapWindow(QWidget):
 
         self.init_manage_kml()
         self.init_wp_window()
+        self.init_cm_window()
         self.timer.start()
 
     def init_manage_kml(self):
@@ -46,10 +48,17 @@ class MapWindow(QWidget):
         self.wpWindow = WpWindow(self._marble_map)
         self._send_WP.clicked.connect(self.open_wp_window)
 
+    def init_cm_window(self):
+        self.cmWindow = CmWindow(self._marble_map)
+        self._special_commands.clicked.connect(self.open_cm_window)
+
     def open_wp_window(self):
         self._marble_map.setInputEnabled(False)
         self._marble_map._mouse_attentive = True
         self.wpWindow.show()
+
+    def open_cm_window(self):
+        self.cmWindow.show()
 
     def _update_home(self):
         self._marble_map.change_home(self._home_opts.currentText())
