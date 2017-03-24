@@ -59,7 +59,7 @@ class WpWindow(QWidget):
         self.WPP = WP_Publisher()
 
     def load_wp_file(self):
-        filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open File', '.')[0])
+        filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open File', PWD)[0])
         if not filename.strip() == '':
             try:
                 new_wps = []
