@@ -9,6 +9,7 @@ import rospy
 from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
 from Signals import WP_Handler
 from .Geo import Geobase
+import json
 
 '''
 For changing color of current waypoint to green:
@@ -38,6 +39,29 @@ class ObstaclesSubscriber():
         self.stationaryObstacles = []
         self.movingObstacles = []
         rospy.Subscriber("/obstacles", Obstacles, self.callback)
+        #rospy.Subscriber("obstacles", String, self.json_callback)
+
+    def json_callback(self, obstacles_json):
+        data = json.loads(json_data)
+        moving_obstacles = data["moving_obstacles"]
+        stationary_obstacles = data["stationary_obstacles"]
+
+        self.movingObstacles = []
+        for obstacle in moving_obstacles:
+            lat = float(obstacle["latitude"])
+            lon = float(obstacle["longitude"])
+            radius = float(obstacle["sphere_radius"])
+            height = float(obstacle["altitude_msl"])
+            self.movingObstacles.append((lat, lon, radius, height))
+
+        self.stationaryObstacles = []
+        for obstacle in stationary_obstacles:
+            lat = float(obstacle["latitude"])
+            lon = float(obstacle["longitude"])
+            radius = float(obstacle["cylinder_radius"])
+            height = float(obstacle["cylinder_height"])
+            self.stationaryObstacles.append((lat, lon, radius, height))
+        
 
     def callback(self, obstacles):
         self.stationaryObstacles = []
@@ -61,6 +85,7 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
         self.pe = 0.0
         self.pn = 0.0
         self.psi = 0.0
+        #rospy.Subscriber("/state", FW_State, self.callback)
         rospy.Subscriber("/junker/truth", FW_State, self.callback)
 
     def callback(self, state):

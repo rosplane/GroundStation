@@ -30,7 +30,8 @@ class ArtificialHorizon(QtGui.QWidget):
         self.show()
 
     def addSubscribers(self):
-        rospy.Subscriber("/junker/truth", FW_State, self.subscriberCallback)
+        #rospy.Subscriber("/state", FW_State, self.subscriberCallback)
+        rospy.Subscriber("/junker/truth", FW_State, self.subscriberCallback)   
     
     def subscriberCallback(self, state):
         self.count += 1

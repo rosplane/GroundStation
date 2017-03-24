@@ -24,7 +24,7 @@ def talker():
     if publishState:     statePub = rospy.Publisher("/junker/truth", FW_State, queue_size=50)
     index = 0
     rospy.init_node('talker', anonymous=True)
-    rate = rospy.Rate(10) # 1hz
+    rate = rospy.Rate(10) # hz
     while not rospy.is_shutdown():
 
         index += 1
