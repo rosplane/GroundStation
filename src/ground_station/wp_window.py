@@ -1,5 +1,6 @@
 from python_qt_binding import loadUi
 from PyQt4.Qt import *
+from PyQt4 import QtGui
 
 try:
     from PyQt4.QtCore import QString
@@ -31,9 +32,31 @@ class WpWindow(QWidget):
 
         self.pushButton.clicked.connect(self.add_waypoint)
         self.pushButton_2.clicked.connect(self.remove_waypoint)
+        self.pushButton_3.clicked.connect(self.load_wp_file)
         # For signal handling
         self._marble_map.WPH.wp_clicked.connect(self.clicked_waypoint)
         self._marble_map.WPH.home_changed.connect(self.change_home)
+
+    def load_wp_file(self):
+        filename = str(QtGui.QFileDialog.getOpenFileName(self, 'Open File', '.')[0])
+        if not filename.strip() == '':
+            try:
+                new_wps = []
+                with open(filename.strip(), 'r') as wp_file:
+                    for line in wp_file:
+                        wp_t = line.split()
+                        lat = float(wp_t[0])
+                        lon = float(wp_t[1])
+                        alt = float(wp_t[2])
+                        new_wps.append((lat, lon, alt))
+                for i in range(len(self.waypoints)):
+                    self._marble_map.WPH.emit_removed(0)
+                self.waypoints = new_wps
+                self.update_lists()
+                for i, wp in enumerate(self.waypoints):
+                    self._marble_map.WPH.emit_inserted(wp[0], wp[1], wp[2], i)
+            except:
+                print('Invalid waypoint file selected. Ensure that format is correct.')
 
     def update_lists(self):
         self.listWidget.clear()
