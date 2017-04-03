@@ -6,7 +6,7 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
 
 import map_info_parser
 import rospy
-from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
+from fcu_common.msg import State, GPS, Obstacles, Obstacle
 from Signals import WP_Handler
 from .Geo import Geobase
 
@@ -61,7 +61,8 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
         self.pe = 0.0
         self.pn = 0.0
         self.psi = 0.0
-        rospy.Subscriber("/junker/truth", FW_State, self.callback)
+        rospy.Subscriber("/junker/truth", State, self.callback)
+        rospy.Subscriber("/state", State, self.callback)
 
     def callback(self, state):
         self.pe = state.position[1]
@@ -139,6 +140,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         #self.R_prime = cos(radians(self.latlon[0]))*self.R
         de = self.stateSubscriber.pe
         dn = self.stateSubscriber.pn
+        #print((de, dn, self.latlon[0], self.latlon[1], self._home_map))#----------------
         psi = self.stateSubscriber.psi
 
         # Draw Plane Lines with pts 1-7
@@ -295,15 +297,15 @@ class MarbleMap(Marble.MarbleWidget):
                 print 'Not found. Zoom in!'
 
     def change_home(self, map_name):
-        latlonzoom = self._map_coords[map_name]
+        self._home_map = map_name
+        latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.latlon = map_info_parser.get_latlon(self._home_map)
         self.GB = Geobase(self.latlon[0], self.latlon[1])
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
-        self._home_map = map_name
         self.update()
-        self.WPH.emit_home_change(map_name)
+        self.WPH.emit_home_change(self._home_map)
 
     def get_home(self):
         return self._home_pt

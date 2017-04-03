@@ -1,0 +1,3 @@
+The files in this folder are used to save waypoint data between
+the ground station's opening and closing. Please do not delete these files
+unless you do not want waypoints for the specific map or you have another file to load from custom wps.
