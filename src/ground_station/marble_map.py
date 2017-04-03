@@ -6,8 +6,8 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
 
 import map_info_parser
 import rospy
-from fcu_common.msg import FW_State, GPS
 from std_msgs.msg import String
+from fcu_common.msg import State, GPS
 from Signals import WP_Handler
 from .Geo import Geobase
 import json, re
@@ -39,7 +39,6 @@ class MissionSubscriber():
     def __init__(self):
         self.mission_data = ""
         rospy.Subscriber("missions", String, self.callback)
-        print(len(self.mission_data))
 
     def callback(self, mission_json):
         json_data = mission_json.data
@@ -47,11 +46,7 @@ class MissionSubscriber():
         json_data = re.sub(r"'",r'"',json_data)
         json_data = re.sub(r"True",r'"True"',json_data)
         json_data = re.sub(r"False",r'"False"',json_data)
-        print(json_data)
         data = json.loads(json_data)[0]
-        print(len(self.mission_data))
-        print(data["fly_zones"])
-        print(data["off_axis_target_pos"])
         self.mission_data = data
 
 
@@ -90,8 +85,9 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
         self.pe = 0.0
         self.pn = 0.0
         self.psi = 0.0
-        #rospy.Subscriber("/state", FW_State, self.callback)
-        rospy.Subscriber("/junker/truth", FW_State, self.callback)
+
+        rospy.Subscriber("/junker/truth", State, self.callback)
+        rospy.Subscriber("/state", State, self.callback)
 
     def callback(self, state):
         self.pe = state.position[1]
@@ -171,6 +167,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         #self.R_prime = cos(radians(self.latlon[0]))*self.R
         de = self.stateSubscriber.pe
         dn = self.stateSubscriber.pn
+        #print((de, dn, self.latlon[0], self.latlon[1], self._home_map))#----------------
         psi = self.stateSubscriber.psi
 
         # Draw Plane Lines with pts 1-7
@@ -236,13 +233,16 @@ class PaintLayer(Marble.LayerInterface, QObject):
             location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
 
+    def metersToFeet(self, meters):
+        return meters*3.28084
+
     def drawStationaryObstacles(self, painter):
-        # height and radius are both in meters (not feet!)
-        UAV_height = self.gpsSubscriber.altitude # meters
+        # height and radius are both in feet
+        UAV_height = self.metersToFeet(self.gpsSubscriber.altitude)
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
         # Draw obstacles according to latlong degrees and height relative to the UAV
         for (latitude, longitude, radius, height) in self.obsSubscriber.stationaryObstacles:
-            pixelDiameter = ceil(2*220*radius/referenceDistance)
+            pixelDiameter = ceil(2*67*radius/referenceDistance)
             heightDiff = height-UAV_height
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
 
@@ -254,7 +254,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
             painter.drawText(location, str(floor(heightDiff)))
 
     def drawMovingObstacles(self, painter):
-        UAV_height = self.gpsSubscriber.altitude # meters
+        UAV_height = self.metersToFeet(self.gpsSubscriber.altitude)
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
         # Draw obstacles according to latlong degrees and height relative to the UAV
         for (latitude, longitude, radius, height) in self.obsSubscriber.movingObstacles:
@@ -262,7 +262,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
             location = Marble.GeoDataCoordinates(longitude, latitude, height, Marble.GeoDataCoordinates.Degree)
 
             # Draw maximum radius of sphere in grey
-            pixelDiameter = ceil(2*220*radius/referenceDistance)
+            pixelDiameter = ceil(2*67*radius/referenceDistance)
             painter.setPen(QPen(QBrush(Qt.darkGreen), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
             painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
 
@@ -270,7 +270,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
             # Calculate radius of sphere at current height
             if abs(heightDiff) < radius:
                 localRadius = sqrt(radius*radius - heightDiff*heightDiff)
-                pixelDiameter = ceil(2*220*localRadius/referenceDistance)
+                pixelDiameter = ceil(2*67*localRadius/referenceDistance)
                 painter.setPen(QPen(QBrush(Qt.red), pixelDiameter/2, Qt.SolidLine, Qt.RoundCap))
                 painter.drawEllipse(location, pixelDiameter/2, pixelDiameter/2)
             painter.setPen(QPen(QBrush(Qt.black), 1, Qt.SolidLine, Qt.RoundCap))
@@ -347,15 +347,15 @@ class MarbleMap(Marble.MarbleWidget):
                 print 'Not found. Zoom in!'
 
     def change_home(self, map_name):
-        latlonzoom = self._map_coords[map_name]
+        self._home_map = map_name
+        latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.latlon = map_info_parser.get_latlon(self._home_map)
         self.GB = Geobase(self.latlon[0], self.latlon[1])
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
-        self._home_map = map_name
         self.update()
-        self.WPH.emit_home_change(map_name)
+        self.WPH.emit_home_change(self._home_map)
 
     def get_home(self):
         return self._home_pt
