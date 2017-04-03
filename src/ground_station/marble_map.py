@@ -6,10 +6,11 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
 
 import map_info_parser
 import rospy
-from fcu_common.msg import FW_State, GPS, Obstacles, Obstacle
+from fcu_common.msg import FW_State, GPS
+from std_msgs.msg import String
 from Signals import WP_Handler
 from .Geo import Geobase
-import json
+import json, re
 
 '''
 For changing color of current waypoint to green:
@@ -34,14 +35,36 @@ class GPSSubscriber():
         self.lon = -1.0*gps.longitude
         self.altitude = gps.altitude
 
+class MissionSubscriber():
+    def __init__(self):
+        self.mission_data = ""
+        rospy.Subscriber("missions", String, self.callback)
+        print(len(self.mission_data))
+
+    def callback(self, mission_json):
+        json_data = mission_json.data
+        json_data = re.sub(r"u'",r'"',json_data)
+        json_data = re.sub(r"'",r'"',json_data)
+        json_data = re.sub(r"True",r'"True"',json_data)
+        json_data = re.sub(r"False",r'"False"',json_data)
+        print(json_data)
+        data = json.loads(json_data)[0]
+        print(len(self.mission_data))
+        print(data["fly_zones"])
+        print(data["off_axis_target_pos"])
+        self.mission_data = data
+
+
 class ObstaclesSubscriber():
     def __init__(self):
         self.stationaryObstacles = []
         self.movingObstacles = []
-        rospy.Subscriber("/obstacles", Obstacles, self.callback)
-        #rospy.Subscriber("obstacles", String, self.json_callback)
+        rospy.Subscriber("/obstacles", String, self.json_callback)
 
     def json_callback(self, obstacles_json):
+        json_data = obstacles_json.data
+        json_data = re.sub(r"u'",r'"',json_data)
+        json_data = re.sub(r"'",r'"',json_data)
         data = json.loads(json_data)
         moving_obstacles = data["moving_obstacles"]
         stationary_obstacles = data["stationary_obstacles"]
@@ -61,24 +84,6 @@ class ObstaclesSubscriber():
             radius = float(obstacle["cylinder_radius"])
             height = float(obstacle["cylinder_height"])
             self.stationaryObstacles.append((lat, lon, radius, height))
-        
-
-    def callback(self, obstacles):
-        self.stationaryObstacles = []
-        for obstacle in obstacles.stationary_obstacles:
-            lat = obstacle.latitude
-            lon = obstacle.longitude
-            radius = obstacle.radius
-            height = obstacle.height
-            self.stationaryObstacles.append((lat, lon, radius, height))
-
-        self.movingObstacles = []
-        for obstacle in obstacles.moving_obstacles:
-            lat = obstacle.latitude
-            lon = obstacle.longitude
-            radius = obstacle.radius
-            height = obstacle.height
-            self.movingObstacles.append((lat, lon, radius, height))
 
 class StateSubscriber(): # For rendering rotated plane onto marble widget
     def __init__(self):
@@ -104,6 +109,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
         self.gpsSubscriber = GPSSubscriber()
         self.obsSubscriber = ObstaclesSubscriber()
+        self.missionSubscriber = MissionSubscriber()
         self.stateSubscriber = StateSubscriber()
 
         # For meters to GPS conversion and plane geometry
@@ -149,6 +155,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         if (self.marble.zoom() > 2700):
             self.drawStationaryObstacles(painter)
             self.drawMovingObstacles(painter)
+            self.drawMissionDetails(painter)
         self.drawPlane(painter) # Plane on top of all other items in drawing
         return True
 
@@ -200,6 +207,26 @@ class PaintLayer(Marble.LayerInterface, QObject):
         painter.drawPolyline(line_2)
         painter.drawPolyline(line_3)
         painter.drawPolyline(line_4)
+
+    def drawMissionDetails(self, painter):
+        mission_data = self.missionSubscriber.mission_data
+        if len(mission_data) == 0:
+            return
+
+        painter.setPen(QPen(QBrush(Qt.blue), 4.5, Qt.SolidLine, Qt.RoundCap))
+
+        # Draw boundaries
+        for zone in mission_data['fly_zones']:
+            line = Marble.GeoDataLineString()
+            for point in zone['boundary_pts']:
+                lat = point['latitude']
+                lon = point['longitude']
+                order = int(point['order'])
+                location = Marble.GeoDataCoordinates(lon, lat, 0.0, Marble.GeoDataCoordinates.Degree)
+                line.append(location)
+            line.append(line[0]) # Close the polygon by adding the first point again
+            painter.drawPolyline(line)
+
 
     def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
