@@ -35,7 +35,7 @@ class ArtificialHorizon(QtGui.QWidget):
 
     def subscriberCallback(self, state):
         self.count += 1
-        if self.count > 100:
+        if self.count > 2:
             self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
             self.heading =  int (math.floor(state.psi*(180.0/math.pi)))

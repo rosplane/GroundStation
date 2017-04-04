@@ -2,7 +2,7 @@ from PyKDE4.marble import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import os.path
-from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees
+from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees, fmod, pi
 
 import map_info_parser
 import rospy
@@ -92,7 +92,7 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
     def callback(self, state):
         self.pe = state.position[1]
         self.pn = state.position[0]
-        self.psi = state.psi
+        self.psi = fmod(state.chi, 2*pi) #==============================psi
 
 # Class for allowing the widget to paint to the marble map
 class PaintLayer(Marble.LayerInterface, QObject):
