@@ -57,7 +57,7 @@ class ObstaclesSubscriber():
         rospy.Subscriber("/obstacles", String, self.json_callback)
 
     def json_callback(self, obstacles_json):
-        json_data = obstacles_json.data
+        json_data = str(obstacles_json.data)
         json_data = re.sub(r"u'",r'"',json_data)
         json_data = re.sub(r"'",r'"',json_data)
         data = json.loads(json_data)
@@ -226,7 +226,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
 
     def drawWaypoints(self, painter):
-        painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
+        painter.setPen(QPen(QBrush(Qt.blue), 4.5, Qt.SolidLine, Qt.RoundCap))
 
         # Draw waypoints according to latlong degrees for current map
         for waypoint in self.waypoints:

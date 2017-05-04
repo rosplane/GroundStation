@@ -17,18 +17,17 @@ PWD = os.path.dirname(os.path.abspath(__file__))
 class WP_Publisher():
     def __init__(self):
         self.pub = rospy.Publisher('/waypoint_path', FW_Waypoint, queue_size=50)
-        #rospy.init_node('publish_wp_to_plane', anonymous=True)
-        #self.rate = rospy.Rate(10)
 
     def publish_wp_to_plane(self, wp):
         wp_obj = FW_Waypoint()
         wp_obj.w[0] = wp[0]
         wp_obj.w[1] = wp[1]
         wp_obj.w[2] = wp[2]
-        wp_obj.chi_d = 0.0 #?
-        wp_obj.chi_valid = False
-        wp_obj.Va_d = 30.0
-        wp_obj.set_current = False #?
+        wp_obj.chi_d = 0.0 # course for this waypoint
+        wp_obj.chi_valid = False # determines if dubins is used
+                                 # (see ros_plane -> path_manager_example.cpp)
+        wp_obj.Va_d = 30.0 # m/s
+        wp_obj.set_current = False # sets to be executed now
         self.pub.publish(wp_obj)
 
 class WpWindow(QWidget):
