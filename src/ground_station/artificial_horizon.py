@@ -3,6 +3,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
 from PyQt4.QtGui import QColor, QBrush, QPen, QFont, QPolygon
 from fcu_common.msg import State, GPS
+from ros_plane.msg import Controller_Internals
 
 class ArtificialHorizon(QtGui.QWidget):
     def __init__(self):
@@ -21,6 +22,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.altitude = 0 # ft MSL
         self.heading = 0  # degrees
         self.numSat = 0   # Number of Satellites (GPS)
+        self.controllerInternals = Controller_Internals()
 
         self.pitchInterval = 0.013 # % of height used to display 1 degree
 
@@ -34,9 +36,13 @@ class ArtificialHorizon(QtGui.QWidget):
         rospy.Subscriber("/junker/truth", State, self.subscriberCallback)
         rospy.Subscriber("/state", State, self.subscriberCallback)
         rospy.Subscriber("/gps/data", GPS, self.callback_GPS)
+        rospy.Subscriber("/controller_inners", Controller_Internals, self.callback_ControllerInternals)
 
     def callback_GPS(self, gps_data):
         self.numSat = gps_data.NumSat
+
+    def callback_ControllerInternals(self, internals):
+        self.controllerInternals = internals
 
     def subscriberCallback(self, state):
         self.count += 1
@@ -83,6 +89,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.drawAltitudeIndicator(event, painter)
         self.drawHeadingIndicator(event, painter)
         self.drawNumSatellites(event, painter)
+        self.drawAltitudeZone(event, painter)
 
     def drawNumSatellites(self, event, painter):
         p1 = QPoint(0,0)
@@ -93,6 +100,13 @@ class ArtificialHorizon(QtGui.QWidget):
         else:
             painter.setPen(QPen(QBrush(Qt.green), 2, Qt.SolidLine))
         painter.drawText(rect,QtCore.Qt.AlignCenter,"GPS: " + str(self.numSat) + " satellites")
+
+    def drawAltitudeZone(self, event, painter):
+        p1 = QPoint(self.width*(1-0.25),0)
+        p2 = QPoint(self.width,self.height*0.1)
+        rect = QRectF(p1,p2)
+        painter.setPen(QPen(QBrush(Qt.green), 2, Qt.SolidLine))
+        painter.drawText(rect,QtCore.Qt.AlignCenter,"Altitude zone: " + str(self.controllerInternals.alt_zone))
 
     def drawSky(self, event, painter):
         brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)
