@@ -187,6 +187,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
             self.drawMissionDetails(painter)
         self.drawPlane(painter) # Plane on top of all other items in drawing
         self.drawCurPath(painter)
+        self.drawHomePoint(painter)
         return True
 
     def rotate_x(self, x, y, a):
@@ -194,6 +195,12 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def rotate_y(self, x, y, a):
         return -1 * x * sin(a) + y * cos(a)
+
+    def drawHomePoint(self, painter):
+        painter.setPen(QPen(QBrush(Qt.green), 4.5, Qt.SolidLine, Qt.RoundCap))
+        location = Marble.GeoDataCoordinates(self.deToLon(0), self.dnToLat(0), 0.0, Marble.GeoDataCoordinates.Degree)
+        painter.drawEllipse(location, 5, 5)
+
 
     def drawCurPath(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
