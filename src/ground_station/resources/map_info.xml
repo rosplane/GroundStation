@@ -13,6 +13,11 @@
 		<start_lon>-111.6608</start_lon>
     <zoom>2900</zoom>
 	</map>
+	<map name="Elberta">
+		<lat>39.9764</lat>
+		<lon>-111.9582</lon>
+		<zoom>3100</zoom>
+	</map>
     <map name="Naval Base Competition">
         <lat>38.146191</lat>
         <lon>-76.429454</lon>
