@@ -86,13 +86,22 @@ class PlotWidget(QWidget):
 
         # Available ros topics for plotting
         self.message_dict = {
-            'Course angle (rad)':'/state/chi',
-            'Course angle commanded (rad)':'/controller_commands/chi_c',
-            'Airspeed (m/s)':'/state/Va',
-            'NumSat':'/gps/data/NumSat',
-            'Phi Command':'/controller_inners/phi_c',
-            'Phi':'/state/phi'
+            'NumSat':['/gps/data/NumSat'],
+            'Theta vs. Theta_c (Pitch angle)':['/state/theta','/controller_inners/theta_c'],
+            'Phi vs. Phi_c':['/state/phi','/controller_inners/phi_c'],
+            'Chi vs. Chi_c (Course angle)':['/state/chi','/controller_commands/chi_c'],
+            'Airspeed (m/s)':['/state/Va'],
             }
+
+        # # Available ros topics for plotting
+        # self.message_dict = {
+        #     'Airspeed (m/s)':['/state/Va'],
+        #     'Course angle (rad)':['/state/chi'],
+        #     'Course angle commanded (rad)':['/controller_commands/chi_c'],
+        #     'NumSat':['/gps/data/NumSat'],
+        #     'Phi Command':['/controller_inners/phi_c'],
+        #     'Phi':['/state/phi'],
+        #     }
 
         # # Available ros topics for plotting
         # self.message_dict = {
@@ -125,7 +134,7 @@ class PlotWidget(QWidget):
 
         self._start_time = rospy.get_time()
         self._rosdata = {}
-        self._current_topic = ''
+        self._current_topics = []
         self._remove_topic_menu = QMenu()
 
         self._msgs.clear()
@@ -164,12 +173,16 @@ class PlotWidget(QWidget):
         self._subscribed_topics_changed()
 
     def _draw_graph(self):
-        plottable, message = is_plottable(self.message_dict[self._msgs.currentText()])
-        # if self._current_topic: # if there's already a plotted topic
-        #     self.remove_topic(self._current_topic)
+        if self._current_topics: # if there's already plotted topics
+            for current_topic in self._current_topics:
+                self.remove_topic(current_topic)
 
-        self._current_topic = self.message_dict[self._msgs.currentText()]
-        self.add_topic(str(self.message_dict[self._msgs.currentText()]))
+        self._current_topics = []       
+        currentMessages = self.message_dict[self._msgs.currentText()]
+        for message in currentMessages:
+            # plottable, message = is_plottable(message)
+            self._current_topics.append(message)
+            self.add_topic(str(message))
 
     @Slot(bool)
     def on_pause_button_clicked(self, checked):
