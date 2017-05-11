@@ -1,4 +1,4 @@
-<maps default="Rock Canyon Park (South Pavilion)">
+<maps default="Elberta">
     <!--
     <map name="Map Name For Menu">
         <lat>Latitude Float (N+, S-)</lat>
@@ -32,5 +32,10 @@
     	<lat>40.2671764713</lat>
     	<lon>-111.634427359</lon>
     	<zoom>3300</zoom>
+    </map>
+    <map name="Elberta">
+        <lat>39.983449</lat>
+        <lon>-111.993523</lon>
+        <zoom>3300</zoom>
     </map>
 </maps>
