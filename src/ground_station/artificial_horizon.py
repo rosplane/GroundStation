@@ -2,7 +2,7 @@ import sys, math, rospy, random
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
 from PyQt4.QtGui import QColor, QBrush, QPen, QFont, QPolygon
-from fcu_common.msg import State
+from fcu_common.msg import State, GPS
 
 class ArtificialHorizon(QtGui.QWidget):
     def __init__(self):
@@ -20,6 +20,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.speed = 0    # KIAS
         self.altitude = 0 # ft MSL
         self.heading = 0  # degrees
+        self.numSat = 0   # Number of Satellites (GPS)
 
         self.pitchInterval = 0.013 # % of height used to display 1 degree
 
@@ -32,10 +33,14 @@ class ArtificialHorizon(QtGui.QWidget):
     def addSubscribers(self):
         rospy.Subscriber("/junker/truth", State, self.subscriberCallback)
         rospy.Subscriber("/state", State, self.subscriberCallback)
+        rospy.Subscriber("/gps/data", GPS, self.callback_GPS)
+
+    def callback_GPS(self, gps_data):
+        self.numSat = gps_data.NumSat
 
     def subscriberCallback(self, state):
         self.count += 1
-        if self.count > 2:
+        if self.count > 10:
             self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
             self.heading =  int (math.floor(state.psi*(180.0/math.pi)))
@@ -77,6 +82,17 @@ class ArtificialHorizon(QtGui.QWidget):
         self.drawAirspeedIndicator(event, painter)
         self.drawAltitudeIndicator(event, painter)
         self.drawHeadingIndicator(event, painter)
+        self.drawNumSatellites(event, painter)
+
+    def drawNumSatellites(self, event, painter):
+        p1 = QPoint(0,0)
+        p2 = QPoint(self.width*(0.25),self.height*0.1)
+        rect = QRectF(p1,p2)
+        if self.numSat < 4:
+            painter.setPen(QPen(QBrush(Qt.red), 2, Qt.SolidLine))
+        else:
+            painter.setPen(QPen(QBrush(Qt.green), 2, Qt.SolidLine))
+        painter.drawText(rect,QtCore.Qt.AlignCenter,"GPS: " + str(self.numSat) + " satellites")
 
     def drawSky(self, event, painter):
         brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)

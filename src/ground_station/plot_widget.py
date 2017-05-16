@@ -85,10 +85,30 @@ class PlotWidget(QWidget):
         self.setObjectName('PlotWidget')
 
         # Available ros topics for plotting
-        self.message_dict = {'Airspeed (m/s)':'/state/Va','Angle of attack (rad)':'/state/alpha','Slide slip angle (rad)':'/state/beta',
-                             'Roll angle (rad)':'/state/phi','Pitch angle (rad)':'/state/theta','Yaw angle (rad)':'/state/psi',
-                             'Course angle (rad)':'/state/chi','Body frame rollrate (rad/s)':'/state/p','Body frame pitchrate (rad/s)':'/state/q',
-                             'Body frame yawrate (rad/s)':'/state/r','Groundspeed (m/s)':'/state/Vg'}
+        self.message_dict = {
+            'Course angle (rad)':'/state/chi',
+            'Course angle commanded (rad)':'/controller_commands/chi_c',
+            'Airspeed (m/s)':'/state/Va',
+            'NumSat':'/gps/data/NumSat',
+            'Phi Command':'/controller_inners/phi_c',
+            'Phi':'/state/phi'
+            }
+
+        # # Available ros topics for plotting
+        # self.message_dict = {
+        #     'Course angle (rad)':'/state/chi',
+        #     'Course angle commanded (rad)':'/controller_commands/chi_c',
+        #     'Airspeed (m/s)':'/state/Va',
+        #     'Angle of attack (rad)':'/state/alpha',
+        #     'Slide slip angle (rad)':'/state/beta',
+        #     'Roll angle (rad)':'/state/phi',
+        #     'Pitch angle (rad)':'/state/theta',
+        #     'Yaw angle (rad)':'/state/psi',
+        #     'Body frame rollrate (rad/s)':'/state/p',
+        #     'Body frame pitchrate (rad/s)':'/state/q',
+        #     'Body frame yawrate (rad/s)':'/state/r',
+        #     'Groundspeed (m/s)':'/state/Vg'
+        #     }
 
         self._initial_topics = initial_topics
 
@@ -145,8 +165,8 @@ class PlotWidget(QWidget):
 
     def _draw_graph(self):
         plottable, message = is_plottable(self.message_dict[self._msgs.currentText()])
-        if self._current_topic: # if there's already a plotted topic
-            self.remove_topic(self._current_topic)
+        # if self._current_topic: # if there's already a plotted topic
+        #     self.remove_topic(self._current_topic)
 
         self._current_topic = self.message_dict[self._msgs.currentText()]
         self.add_topic(str(self.message_dict[self._msgs.currentText()]))

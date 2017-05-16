@@ -7,10 +7,11 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees, fmod
 import map_info_parser
 import rospy
 from std_msgs.msg import String
-from fcu_common.msg import State, GPS
+from fcu_common.msg import State, GPS, RCRaw
+from ros_plane.msg import Current_Path, Waypoint
 from Signals import WP_Handler
 from .Geo import Geobase
-import json, re
+import json, re, time
 
 '''
 For changing color of current waypoint to green:
@@ -92,7 +93,32 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
     def callback(self, state):
         self.pe = state.position[1]
         self.pn = state.position[0]
-        self.psi = fmod(state.chi, 2*pi) #==============================psi
+        self.psi = fmod(state.chi, 2*pi)
+
+class MiscSubscriber():
+    def __init__(self):
+        rospy.Subscriber("/current_path", Current_Path, self.callback_curPath)
+        rospy.Subscriber("/rc_raw", RCRaw, self.callback_RC)
+        rospy.Subscriber("/waypoint_path", Waypoint, self.callback_waypoints)
+        rospy.Subscriber("/gps/data", GPS, self.callback_GPS)
+
+        self.autopilotEnabled = False
+        self.curPath = Current_Path()
+        self.waypoints = []
+        self.curPath.flag = False
+        self.numSat = 0
+
+    def callback_curPath(self, cp):
+        self.curPath = cp
+
+    def callback_RC(self, rcRaw):
+        self.autopilotEnabled = (rcRaw.values[4] < 1700)
+
+    def callback_waypoints(self, waypoint):
+        self.waypoints.append(waypoint)
+
+    def callback_GPS(self, gps_data):
+        self.numSat = gps_data.NumSat
 
 # Class for allowing the widget to paint to the marble map
 class PaintLayer(Marble.LayerInterface, QObject):
@@ -107,6 +133,8 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.obsSubscriber = ObstaclesSubscriber()
         self.missionSubscriber = MissionSubscriber()
         self.stateSubscriber = StateSubscriber()
+        self.miscSubscriber = MiscSubscriber()
+
 
         # For meters to GPS conversion and plane geometry
         # specifically starting lat, lon of the plane
@@ -121,6 +149,8 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.marble.WPH.wp_removed.connect(self.remove_waypoint)
         self.marble.WPH.home_changed.connect(self.change_home)
 
+        self.timeSinceStart = time.time()
+
     def add_waypoint(self, lat, lon, alt, pos):
         self.waypoints.insert(pos, (lat, lon, alt))
 
@@ -128,7 +158,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         del self.waypoints[pos]
 
     def change_home(self, new_home):
-        self.waypoints = map_info_parser.get_waypoints(new_home)
+        self.waypoints = map_info_parser.get_waypoints(new_home) # GETTING FROM FILE [[[[[[[[[[[[[]]]]]]]]]]]]]
         self.latlon = self.marble.latlon
         self.R_prime = cos(radians(self.latlon[0]))*self.R
         self._home_map = new_home
@@ -153,6 +183,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
             self.drawMovingObstacles(painter)
             self.drawMissionDetails(painter)
         self.drawPlane(painter) # Plane on top of all other items in drawing
+        self.drawCurPath(painter)
         return True
 
     def rotate_x(self, x, y, a):
@@ -161,14 +192,42 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def rotate_y(self, x, y, a):
         return -1 * x * sin(a) + y * cos(a)
 
+    def drawCurPath(self, painter):
+        painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
+        curPath = self.miscSubscriber.curPath
+        if curPath.flag == True:
+            r = curPath.r
+            q = curPath.q
+            scale = 200
+            pt_1 = [r[1],r[0]]
+            pt_2 = [r[1]+scale*q[1],r[0]+scale*q[0]]
+            line_1 = Marble.GeoDataLineString()
+            line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_1[0]), self.dnToLat(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_2[0]), self.dnToLat(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            painter.drawPolyline(line_1)
+        else:
+            c = curPath.c
+            R = curPath.rho
+            referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
+            location = Marble.GeoDataCoordinates(self.deToLon(c[1]), self.dnToLat(c[0]), 0.0, Marble.GeoDataCoordinates.Degree)
+            pixelRadius = ceil(6.8*67*R/referenceDistance)
+            painter.drawEllipse(location, pixelRadius, pixelRadius)
+
+
+
     def drawPlane(self, painter):
-        painter.setPen(QPen(QBrush(Qt.black), 3.5, Qt.SolidLine, Qt.RoundCap))
+        autopilotEnabled = self.miscSubscriber.autopilotEnabled
+        if autopilotEnabled:
+            painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
+        else:
+            painter.setPen(QPen(QBrush(Qt.black), 3.5, Qt.SolidLine, Qt.RoundCap))
         #self.latlon = map_info_parser.get_latlon(self._home_map)
         #self.R_prime = cos(radians(self.latlon[0]))*self.R
         de = self.stateSubscriber.pe
         dn = self.stateSubscriber.pn
         #print((de, dn, self.latlon[0], self.latlon[1], self._home_map))#----------------
         psi = self.stateSubscriber.psi
+
 
         # Draw Plane Lines with pts 1-7
         referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())
@@ -228,9 +287,10 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def drawWaypoints(self, painter):
         painter.setPen(QPen(QBrush(Qt.blue), 4.5, Qt.SolidLine, Qt.RoundCap))
 
+        waypoints = self.miscSubscriber.waypoints # GETTING FROM PLANE [[[[[[[[[[[[[[[[[[[[]]]]]]]]]]]]]]]]]]]]
         # Draw waypoints according to latlong degrees for current map
-        for waypoint in self.waypoints:
-            location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
+        for waypoint in waypoints:
+            location = Marble.GeoDataCoordinates(self.deToLon(waypoint.w[1]), self.dnToLat(waypoint.w[0]), 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
 
     def metersToFeet(self, meters):
