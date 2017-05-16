@@ -1,4 +1,4 @@
-<maps default="Naval Base Competition">
+<maps default="Kawasaki Field">
     <!--
     <map name="Map Name For Menu">
         <lat>Latitude Float (N+, S-)</lat>
@@ -17,6 +17,11 @@
 		<lat>39.9764</lat>
 		<lon>-111.9582</lon>
 		<zoom>3100</zoom>
+	</map>
+	<map name="Kawasaki Field">
+		<lat>40.174571</lat>
+		<lon>-111.651641</lon>
+		<zoom>3250</zoom>
 	</map>
     <map name="Naval Base Competition">
         <lat>38.146191</lat>
