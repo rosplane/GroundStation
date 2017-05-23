@@ -86,11 +86,14 @@ class PlotWidget(QWidget):
 
         # Available ros topics for plotting
         self.message_dict = {
+            'Altitude':['/state/position[2]'],
             'NumSat':['/gps/data/NumSat'],
-            'Theta vs. Theta_c (Pitch angle)':['/state/theta','/controller_inners/theta_c'],
-            'Phi vs. Phi_c':['/state/phi','/controller_inners/phi_c'],
-            'Chi vs. Chi_c (Course angle)':['/state/chi','/controller_commands/chi_c'],
+            'Theta vs. Theta_c (Pitch Angle)':['/state/theta','/controller_inners/theta_c'],
+            'Phi vs. Phi_c (Roll Angle)':['/state/phi','/controller_inners/phi_c'],
+            'Chi vs. Chi_c (Course Angle)':['/state/chi','/controller_commands/chi_c'],
             'Airspeed (m/s)':['/state/Va'],
+            'Commanded Throttle':['/command/F'],
+
             }
 
         # # Available ros topics for plotting

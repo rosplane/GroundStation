@@ -27,7 +27,7 @@ class WP_Publisher():
         wp_obj.w[2] = wp[2]
         wp_obj.chi_d = 0.0 #?
         wp_obj.chi_valid = False
-        wp_obj.Va_d = 30.0
+        wp_obj.Va_d = 15.0
         wp_obj.set_current = False #?
         self.pub.publish(wp_obj)
 

@@ -1,4 +1,4 @@
-<maps default="Elberta">
+<maps default="Springville">
     <!--
     <map name="Map Name For Menu">
         <lat>Latitude Float (N+, S-)</lat>
@@ -36,6 +36,11 @@
     <map name="Elberta">
         <lat>39.983449</lat>
         <lon>-111.993523</lon>
+        <zoom>3300</zoom>
+    </map>
+    <map name="Springville">
+        <lat>40.17452621459961</lat>
+        <lon>-111.65164184570312</lon>
         <zoom>3300</zoom>
     </map>
 </maps>

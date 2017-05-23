@@ -87,13 +87,23 @@ class StateSubscriber(): # For rendering rotated plane onto marble widget
         self.pn = 0.0
         self.psi = 0.0
 
+        self.lat = 0
+        self.lon = 0
+        self.alt_ft = 0
+
         rospy.Subscriber("/junker/truth", State, self.callback)
         rospy.Subscriber("/state", State, self.callback)
+        rospy.Subscriber("/gps_state", State, self.gpsStateCallback)
 
     def callback(self, state):
         self.pe = state.position[1]
         self.pn = state.position[0]
         self.psi = fmod(state.chi, 2*pi)
+
+    def gpsStateCallback(self, state):
+        self.lat = state.position[0]
+        self.lon = state.position[1]
+        self.alt_ft = state.position[2]
 
 class MiscSubscriber():
     def __init__(self):
@@ -187,7 +197,8 @@ class PaintLayer(Marble.LayerInterface, QObject):
             self.drawMissionDetails(painter)
         self.drawPlane(painter) # Plane on top of all other items in drawing
         self.drawCurPath(painter)
-        self.drawHomePoint(painter)
+        # self.drawHomePoint(painter)
+        self.drawGPSDot(painter)
         return True
 
     def rotate_x(self, x, y, a):
@@ -205,6 +216,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def drawCurPath(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
         curPath = self.miscSubscriber.curPath
+        # Straight line
         if curPath.flag == True:
             r = curPath.r
             q = curPath.q
@@ -216,12 +228,19 @@ class PaintLayer(Marble.LayerInterface, QObject):
             line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_2[0]), self.dnToLat(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
             painter.drawPolyline(line_1)
         else:
+            # Loiter
             c = curPath.c 
             R = curPath.rho
             referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
             location = Marble.GeoDataCoordinates(self.deToLon(c[1]), self.dnToLat(c[0]), 0.0, Marble.GeoDataCoordinates.Degree)
             pixelRadius = ceil(6.8*67*R/referenceDistance)
             painter.drawEllipse(location, pixelRadius, pixelRadius)
+
+    def drawGPSDot(self, painter):
+        lon, lat, alt_ft = self.stateSubscriber.lon, self.stateSubscriber.lat, self.stateSubscriber.alt_ft
+        painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
+        location = Marble.GeoDataCoordinates(lon, lat, 0.0, Marble.GeoDataCoordinates.Degree)
+        painter.drawEllipse(location, 5, 5)
 
 
 
@@ -276,6 +295,36 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def drawMissionDetails(self, painter):
         mission_data = self.missionSubscriber.mission_data
+
+        mission_data = {"fly_zones": [
+            {
+                "altitude_msl_max": 200.0,
+                "altitude_msl_min": 100.0,
+                "boundary_pts": [
+                    {
+                        "latitude": 40.1765598495,
+                        "longitude": -111.655536016,
+                        "order": 1
+                    },
+                    {
+                        "latitude": 40.176478653,
+                        "longitude": -111.650451777,
+                        "order": 2
+                    },
+                    {
+                        "latitude": 40.1726680255,
+                        "longitude": -111.647673027,
+                        "order": 3
+                    },
+                    {
+                        "latitude": 40.1726680255,
+                        "longitude": -111.655419845,
+                        "order": 4
+                    }
+                ]
+            }
+        ]}
+
         if len(mission_data) == 0:
             return
 
@@ -300,12 +349,28 @@ class PaintLayer(Marble.LayerInterface, QObject):
         # for waypoint in self.waypoints:
         #     location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
         #     painter.drawEllipse(location, 5, 5)
+
         waypoints = self.miscSubscriber.waypoints
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
         # Draw waypoints according to latlong degrees for current map
         for waypoint in waypoints:
             location = Marble.GeoDataCoordinates(self.deToLon(waypoint.w[1]), self.dnToLat(waypoint.w[0]), 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
+
+        # center = [70,-50]
+        # radius = 40
+        # waypoints = [
+        #     center,
+        #     [center[0],center[1]+radius],
+        #     [center[0],center[1]-radius],
+        #     [center[0]+radius,center[1]],
+        #     [center[0]-radius,center[1]],
+        # ]
+        # painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
+        # # Draw waypoints according to latlong degrees for current map
+        # for waypoint in waypoints:
+        #     location = Marble.GeoDataCoordinates(self.deToLon(waypoint[1]), self.dnToLat(waypoint[0]), 0.0, Marble.GeoDataCoordinates.Degree)
+        #     painter.drawEllipse(location, 5, 5)
 
     def metersToFeet(self, meters):
         return meters*3.28084
