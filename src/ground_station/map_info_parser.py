@@ -39,7 +39,8 @@ def get_waypoints(wp_file_path):
                 lat = float(wp_t[0])
                 lon = float(wp_t[1])
                 alt = float(wp_t[2])
-                wp_list.append((lat, lon, alt))
+                chi = float(wp_t[3])
+                wp_list.append((lat, lon, alt, chi))
         return wp_list
     else:
         # make a blank file

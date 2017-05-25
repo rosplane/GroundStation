@@ -1,13 +1,13 @@
 # Taylor Pool
 # March 14, 2017
-#AUVSI Project
-#Contains a Geobase class that can be used to convert from GPS to NED and vise versa
+# AUVSI Project
+# Contains a Geobase class that can be used to convert from GPS to NED and vise versa
 
 ##############################
 
 
 from geographiclib.geodesic import Geodesic
-import math 
+import math
 
 class Geobase:
     #Initializer Function
@@ -64,4 +64,3 @@ class Geobase:
         decimal = a*(d+(m/60.0)+(s/3600.0))
 
         return decimal
-

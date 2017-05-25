@@ -15,31 +15,9 @@ from std_msgs.msg import Bool
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 RTH_ALT = 10 # "return to home" command will have the plane fly 10 m above home pt
-'''
-class Override_WP_Publisher(): # for loitering, RTH
-    def __init__(self):
-        self.pub = rospy.Publisher('/waypoint_path', FW_Waypoint, queue_size=50)
 
-    def publish_wp_to_plane(self, wp):
-        wp_obj = FW_Waypoint()
-        wp_obj.w[0] = wp[0]
-        wp_obj.w[1] = wp[1]
-        wp_obj.w[2] = wp[2]
-        wp_obj.chi_d = 0.0 # course for this waypoint
-        wp_obj.chi_valid = False # determines if dubins is used
-                                 # (see ros_plane -> path_manager_example.cpp)
-        wp_obj.Va_d = 30.0 # m/s
-        wp_obj.set_current = True # sets to be executed now
-        #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        # MAKE THE NEW FIELD, DEFAULT = False ++++++++++++++++++++++++++++++++++++++++++++
-        #wp_obj.override = True
-
-        self.pub.publish(wp_obj)
-'''
 class CmWindow(QWidget):
 
-    #zs_pub = +++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    #to_pub = +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     drop_pub = rospy.Publisher('bomb_drop', Bool, queue_size=5)
 
     def __init__(self, marble, uifname = 'cm_window.ui'):

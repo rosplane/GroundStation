@@ -26,49 +26,6 @@
       <string>Send to Plane</string>
     </property>
   </widget>
-  <widget class="QPushButton" name="pushButton">
-   <property name="geometry">
-    <rect>
-     <x>530</x>
-     <y>290</y>
-     <width>151</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Add waypoint</string>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="textEdit">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>70</y>
-     <width>221</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="textEdit_2">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>130</y>
-     <width>221</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="textEdit_3">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>190</y>
-     <width>221</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QListWidget" name="listWidget">
    <property name="geometry">
     <rect>
@@ -92,106 +49,16 @@
     <string> </string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>50</y>
-     <width>111</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Latitude (deg)</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>110</y>
-     <width>111</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Longitude (deg)</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>170</y>
-     <width>111</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Altitude (ft)</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>230</y>
-     <width>111</width>
-     <height>17</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Position in list</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox">
-   <property name="geometry">
-    <rect>
-     <x>420</x>
-     <y>250</y>
-     <width>86</width>
-     <height>25</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_2">
-   <property name="geometry">
-    <rect>
-     <x>530</x>
-     <y>330</y>
-     <width>151</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Remove waypoint</string>
-   </property>
-  </widget>
   <widget class="QComboBox" name="mode_comboBox">
     <property name="geometry">
      <rect>
       <x>530</x>
-      <y>370</y>
+      <y>290</y>
       <width>151</width>
       <height>25</height>
      </rect>
     </property>
   </widget>
-  <!--
-  <widget class="QPushButton" name="pushButton_3">
-   <property name="geometry">
-    <rect>
-     <x>530</x>
-     <y>370</y>
-     <width>151</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Load WP File</string>
-   </property>
-  </widget>
--->
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
