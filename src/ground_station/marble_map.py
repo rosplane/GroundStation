@@ -11,7 +11,7 @@ from fcu_common.msg import State, GPS, RCRaw
 from ros_plane.msg import Current_Path, Waypoint
 from Signals import WP_Handler
 from .Geo import Geobase
-import json, re, time
+import json, re, math
 
 '''
 For changing color of current waypoint to green:
@@ -162,8 +162,6 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.marble.WPH.wp_removed.connect(self.remove_waypoint)
         self.marble.WPH.home_changed.connect(self.change_home)
 
-        self.timeSinceStart = time.time()
-
     def add_waypoint(self, lat, lon, alt, pos):
         self.waypoints.insert(pos, (lat, lon, alt))
 
@@ -195,10 +193,10 @@ class PaintLayer(Marble.LayerInterface, QObject):
             self.drawStationaryObstacles(painter)
             self.drawMovingObstacles(painter)
             self.drawMissionDetails(painter)
-        self.drawPlane(painter) # Plane on top of all other items in drawing
         self.drawCurPath(painter)
+        self.drawPlane(painter) # Plane on top of all other items in drawing
         # self.drawHomePoint(painter)
-        self.drawGPSDot(painter)
+        # self.drawGPSDot(painter)
         return True
 
     def rotate_x(self, x, y, a):
@@ -296,34 +294,34 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def drawMissionDetails(self, painter):
         mission_data = self.missionSubscriber.mission_data
 
-        mission_data = {"fly_zones": [
-            {
-                "altitude_msl_max": 200.0,
-                "altitude_msl_min": 100.0,
-                "boundary_pts": [
-                    {
-                        "latitude": 40.1765598495,
-                        "longitude": -111.655536016,
-                        "order": 1
-                    },
-                    {
-                        "latitude": 40.176478653,
-                        "longitude": -111.650451777,
-                        "order": 2
-                    },
-                    {
-                        "latitude": 40.1726680255,
-                        "longitude": -111.647673027,
-                        "order": 3
-                    },
-                    {
-                        "latitude": 40.1726680255,
-                        "longitude": -111.655419845,
-                        "order": 4
-                    }
-                ]
-            }
-        ]}
+        # mission_data = {"fly_zones": [
+        #     {
+        #         "altitude_msl_max": 200.0,
+        #         "altitude_msl_min": 100.0,
+        #         "boundary_pts": [
+        #             {
+        #                 "latitude": 40.1765598495,
+        #                 "longitude": -111.655536016,
+        #                 "order": 1
+        #             },
+        #             {
+        #                 "latitude": 40.176478653,
+        #                 "longitude": -111.650451777,
+        #                 "order": 2
+        #             },
+        #             {
+        #                 "latitude": 40.1726680255,
+        #                 "longitude": -111.647673027,
+        #                 "order": 3
+        #             },
+        #             {
+        #                 "latitude": 40.1726680255,
+        #                 "longitude": -111.655419845,
+        #                 "order": 4
+        #             }
+        #         ]
+        #     }
+        # ]}
 
         if len(mission_data) == 0:
             return
@@ -344,33 +342,31 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
 
     def drawWaypoints(self, painter):
-        # painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
-        # # Draw waypoints according to latlong degrees for current map
-        # for waypoint in self.waypoints:
-        #     location = Marble.GeoDataCoordinates(waypoint[1], waypoint[0], 0.0, Marble.GeoDataCoordinates.Degree)
-        #     painter.drawEllipse(location, 5, 5)
 
-        waypoints = self.miscSubscriber.waypoints
+        waypointSources = ['interop','plane','internal']
+        waypointsSource = waypointSources[0]
+
+        waypoints = []
+        if waypointsSource == 'interop':
+            # Subscribe to waypoints published by the interop server
+            waypoints = self.waypoints
+        if waypointsSource == 'plane':
+            # Subcribe to waypoints published by the plane
+            for waypoint in self.miscSubscriber.waypoints:
+                waypoints.append(waypoint.w[0],waypoint.w[1])
+        if waypointsSource == 'internal':
+            # Draw waypoints defined below
+            waypoints = [
+                [30, 0, -60],
+                [180, 0, -60],
+                [50, -150, -60],
+                [180, 10, -60],
+            ]
+
         painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
-        # Draw waypoints according to latlong degrees for current map
         for waypoint in waypoints:
-            location = Marble.GeoDataCoordinates(self.deToLon(waypoint.w[1]), self.dnToLat(waypoint.w[0]), 0.0, Marble.GeoDataCoordinates.Degree)
+            location = Marble.GeoDataCoordinates(self.deToLon(waypoint[1]), self.dnToLat(waypoint[0]), 0.0, Marble.GeoDataCoordinates.Degree)
             painter.drawEllipse(location, 5, 5)
-
-        # center = [70,-50]
-        # radius = 40
-        # waypoints = [
-        #     center,
-        #     [center[0],center[1]+radius],
-        #     [center[0],center[1]-radius],
-        #     [center[0]+radius,center[1]],
-        #     [center[0]-radius,center[1]],
-        # ]
-        # painter.setPen(QPen(QBrush(Qt.red), 4.5, Qt.SolidLine, Qt.RoundCap))
-        # # Draw waypoints according to latlong degrees for current map
-        # for waypoint in waypoints:
-        #     location = Marble.GeoDataCoordinates(self.deToLon(waypoint[1]), self.dnToLat(waypoint[0]), 0.0, Marble.GeoDataCoordinates.Degree)
-        #     painter.drawEllipse(location, 5, 5)
 
     def metersToFeet(self, meters):
         return meters*3.28084
