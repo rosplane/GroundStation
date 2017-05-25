@@ -15,7 +15,7 @@ from std_msgs.msg import Bool
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 RTH_ALT = 10 # "return to home" command will have the plane fly 10 m above home pt
-
+'''
 class Override_WP_Publisher(): # for loitering, RTH
     def __init__(self):
         self.pub = rospy.Publisher('/waypoint_path', FW_Waypoint, queue_size=50)
@@ -35,7 +35,7 @@ class Override_WP_Publisher(): # for loitering, RTH
         #wp_obj.override = True
 
         self.pub.publish(wp_obj)
-
+'''
 class CmWindow(QWidget):
 
     #zs_pub = +++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -61,7 +61,7 @@ class CmWindow(QWidget):
         #self._home_map = self.marble._home_map
         # self.marble.latlon gives home location
 
-        self.OWPP = Override_WP_Publisher()
+        #self.OWPP = Override_WP_Publisher()====================================================
 
     def zero_sensor_command(self):
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -72,22 +72,28 @@ class CmWindow(QWidget):
         print ('takeoff functionality pending')
 
     def loiter_command(self):
+        pass
+        '''
         if self.marble.GIS.received_msg:
             try:
                 lat = float(str(self.loiter_lat_field.toPlainText()))
                 lon = float(str(self.loiter_lon_field.toPlainText()))
                 alt = float(str(self.loiter_alt_field.toPlainText()))
                 meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, alt/3.281)
-                self.OWPP.publish_wp_to_plane(meter_data)
+                #self.OWPP.publish_wp_to_plane(meter_data) ============================================
             except ValueError:
                 print('Incorrectly formatted fields. Must all be numbers.')
+        '''
 
     def rth_command(self):
+        pass
+        '''
         if self.marble.GIS.received_msg:
             lat = self.marble.latlon[0]
             lon = self.marble.latlon[1]
             meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, RTH_ALT)
-            self.OWPP.publish_wp_to_plane(meter_data)
+            #self.OWPP.publish_wp_to_plane(meter_data) =================================================
+        '''
 
     def land_command(self):
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

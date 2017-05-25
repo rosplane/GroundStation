@@ -134,7 +134,7 @@ class PaintLayer(Marble.LayerInterface, QObject):
         self.stateSubscriber = StateSubscriber()
         self.miscSubscriber = MiscSubscriber()
 
-        self.use_interop_boundaries = False # <<<<< Assign to True to use interop server for boundaries
+        self.use_interop_boundaries = True # <<<<< Assign to True to use interop server for boundaries
 
         # For meters to GPS conversion and plane geometry
         # specifically starting lat, lon of the plane

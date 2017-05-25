@@ -44,12 +44,11 @@ class WpWindow(QWidget):
         self.load_wp_from_file()
         self.update_lists()
         self.set_title()
-        # no redraw (?) ?????????????????????????????????????????
-        # no transfer to plane (?) ??????????????????????????????
 
         # Set up event triggers
         self.pushButton.clicked.connect(self.add_waypoint)
         self.pushButton_2.clicked.connect(self.remove_waypoint)
+        self.send_to_plane_button.clicked.connect(self.transfer_waypoint_data)
         self.mode_comboBox.clear()
         self.mode_comboBox.addItem(QString('Empty Mode'))
         self.mode_comboBox.addItem(QString('Main Mode'))
@@ -87,7 +86,7 @@ class WpWindow(QWidget):
         self.set_title()
         for i, wp in enumerate(self.waypoints): # update map waypoints
             self.marble.WPH.emit_inserted(wp[0], wp[1], wp[2], i)
-        self.transfer_waypoint_data() # update plane's waypoints
+        #self.transfer_waypoint_data() # update plane's waypoints ============================================
 
     def remove_waypoint(self): # no home or mode change
         pos = self.listWidget.currentRow()
@@ -95,7 +94,7 @@ class WpWindow(QWidget):
             del self.waypoints[pos] # update self.waypoints
             self.marble.WPH.emit_removed(pos) # update map waypoints
             self.update_lists() # update wp_window contents
-            self.transfer_waypoint_data() # update plane's waypoints
+            #self.transfer_waypoint_data() # update plane's waypoints ========================================
 
     def add_waypoint(self): # no home or mode change
         # Check PARAMS and emit signal
@@ -107,7 +106,7 @@ class WpWindow(QWidget):
             self.waypoints.insert(pos, (lat, lon, alt)) # update self.waypoints
             self.update_lists() # update wp_window contents
             self.marble.WPH.emit_inserted(lat, lon, alt, pos) # update map waypoints
-            self.transfer_waypoint_data() # update plane's waypoints
+            #self.transfer_waypoint_data() # update plane's waypoints ============================================
         except ValueError:
             print('Incorrectly formatted fields. Must all be numbers.')
 
@@ -154,8 +153,8 @@ class WpWindow(QWidget):
                 wp_file.write('%f %f %f\n' % (wp[0], wp[1], wp[2]))
 
     def transfer_waypoint_data(self): # needs new self.waypoints
-        if self.marble.GIS.received_msg:
-            self.WPP.publish_wp_to_plane([-9999,-9999,-9999]) # "Reset" wp
+        if self.marble.GIS.received_msg and not self.marble.wp_state == 'None':
+            #self.WPP.publish_wp_to_plane([-9999,-9999,-9999]) # "Reset" wp
             for wp in self.waypoints:
                 meter_data = self.marble.GIS.GB.gps_to_ned(wp[0], wp[1], wp[2]/3.28084)
                 self.WPP.publish_wp_to_plane(meter_data)

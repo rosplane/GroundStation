@@ -13,6 +13,19 @@
   <property name="windowTitle">
    <string>Handle Waypoints</string>
   </property>
+  <widget class="QPushButton" name="send_to_plane_button">
+    <property name="geometry">
+      <rect>
+        <x>530</x>
+        <y>250</y>
+        <width>151</width>
+        <height>25</height>
+      </rect>
+    </property>
+    <property name="text">
+      <string>Send to Plane</string>
+    </property>
+  </widget>
   <widget class="QPushButton" name="pushButton">
    <property name="geometry">
     <rect>
@@ -23,7 +36,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Send to Plane</string>
+    <string>Add waypoint</string>
    </property>
   </widget>
   <widget class="QTextEdit" name="textEdit">
@@ -151,7 +164,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Remove from Plane</string>
+    <string>Remove waypoint</string>
    </property>
   </widget>
   <widget class="QComboBox" name="mode_comboBox">
