@@ -42,9 +42,9 @@ class CmWindow(QWidget):
     #to_pub = +++++++++++++++++++++++++++++++++++++++++++++++++++++++
     drop_pub = rospy.Publisher('bomb_drop', Bool, queue_size=5)
 
-    def __init__(self, _marble_map, uifname = 'cm_window.ui'):
+    def __init__(self, marble, uifname = 'cm_window.ui'):
         super(CmWindow, self).__init__()
-        self._marble_map = _marble_map
+        self.marble = marble
         ui_file = os.path.join(PWD, 'resources', uifname)
         loadUi(ui_file, self)
         self.setObjectName(uifname)
@@ -55,11 +55,11 @@ class CmWindow(QWidget):
         self.rth_button.clicked.connect(self.rth_command)
         self.land_button.clicked.connect(self.land_command)
         self.drop_button.clicked.connect(self.drop_command)
-        self._marble_map.WPH.wp_clicked.connect(self.clicked_waypoint)
+        self.marble.WPH.wp_clicked.connect(self.clicked_waypoint)
 
         # updating not needed, unless zero_sensors somehow comes to need it
-        #self._home_map = self._marble_map._home_map
-        # self._marble_map.latlon gives home location
+        #self._home_map = self.marble._home_map
+        # self.marble.latlon gives home location
 
         self.OWPP = Override_WP_Publisher()
 
@@ -72,20 +72,22 @@ class CmWindow(QWidget):
         print ('takeoff functionality pending')
 
     def loiter_command(self):
-        try:
-            lat = float(str(self.loiter_lat_field.toPlainText()))
-            lon = float(str(self.loiter_lon_field.toPlainText()))
-            alt = float(str(self.loiter_alt_field.toPlainText()))
-            meter_data = self._marble_map.GB.gps_to_ned(lat, lon, alt/3.281)
-            self.OWPP.publish_wp_to_plane(meter_data)
-        except ValueError:
-            print('Incorrectly formatted fields. Must all be numbers.')
+        if self.marble.GIS.received_msg:
+            try:
+                lat = float(str(self.loiter_lat_field.toPlainText()))
+                lon = float(str(self.loiter_lon_field.toPlainText()))
+                alt = float(str(self.loiter_alt_field.toPlainText()))
+                meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, alt/3.281)
+                self.OWPP.publish_wp_to_plane(meter_data)
+            except ValueError:
+                print('Incorrectly formatted fields. Must all be numbers.')
 
     def rth_command(self):
-        lat = self._marble_map.latlon[0]
-        lon = self._marble_map.latlon[1]
-        meter_data = self._marble_map.GB.gps_to_ned(lat, lon, RTH_ALT)
-        self.OWPP.publish_wp_to_plane(meter_data)
+        if self.marble.GIS.received_msg:
+            lat = self.marble.latlon[0]
+            lon = self.marble.latlon[1]
+            meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, RTH_ALT)
+            self.OWPP.publish_wp_to_plane(meter_data)
 
     def land_command(self):
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -100,5 +102,5 @@ class CmWindow(QWidget):
         self.loiter_lon_field.setText(QString(str(lon)))
 
     def closeEvent(self, QCloseEvent):
-        self._marble_map.setInputEnabled(True)
-        self._marble_map._mouse_attentive = False
+        self.marble.setInputEnabled(True)
+        self.marble._mouse_attentive = False

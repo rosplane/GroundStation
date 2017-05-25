@@ -1,4 +1,5 @@
-The files in this folder are used to save waypoint data between
-the ground station's opening and closing. Please do not delete 
-these files unless you do not want waypoints for the specific map 
-or you have another file to load from custom wps.
+the main_wps folder contains waypoints given by the competition
+
+the search_wps folder contains waypoints for the sweeping search
+
+you must follow the file naming convention of [MAP NAME]_main_wps.txt or [MAP NAME]_search_wps.txt

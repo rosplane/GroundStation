@@ -66,17 +66,17 @@
     </rect>
    </property>
   </widget>
-  <widget class="QLabel" name="label">
+  <widget class="QLabel" name="waypoint_label">
    <property name="geometry">
     <rect>
-     <x>160</x>
+     <x>80</x>
      <y>30</y>
-     <width>81</width>
+     <width>320</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
-    <string>Waypoints</string>
+    <string> </string>
    </property>
   </widget>
   <widget class="QLabel" name="label_2">
@@ -154,6 +154,17 @@
     <string>Remove from Plane</string>
    </property>
   </widget>
+  <widget class="QComboBox" name="mode_comboBox">
+    <property name="geometry">
+     <rect>
+      <x>530</x>
+      <y>370</y>
+      <width>151</width>
+      <height>25</height>
+     </rect>
+    </property>
+  </widget>
+  <!--
   <widget class="QPushButton" name="pushButton_3">
    <property name="geometry">
     <rect>
@@ -167,6 +178,7 @@
     <string>Load WP File</string>
    </property>
   </widget>
+-->
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>

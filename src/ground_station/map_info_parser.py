@@ -30,8 +30,7 @@ def get_latlon(map_name):
         lon = float(str(mapnode.find('lon').text))
     return [lat, lon]
 
-def get_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data', '%s_wp_data.txt' % map_name)
+def get_waypoints(wp_file_path):
     if os.path.exists(wp_file_path):
         wp_list = []
         with open(wp_file_path, 'r') as wp_file:
@@ -43,4 +42,14 @@ def get_waypoints(map_name):
                 wp_list.append((lat, lon, alt))
         return wp_list
     else:
+        # make a blank file
+        open(wp_file_path, 'a').close()
         return []
+
+def get_main_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','main_wps', '%s_main_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
+
+def get_search_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','search_wps', '%s_search_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
