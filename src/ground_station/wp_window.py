@@ -50,7 +50,11 @@ class WpWindow(QWidget):
         self.mode_comboBox.clear()
         self.mode_comboBox.addItem(QString('Empty Mode'))
         self.mode_comboBox.addItem(QString('Main Mode'))
+        self.mode_comboBox.addItem(QString('Path Mode'))
         self.mode_comboBox.addItem(QString('Search Mode'))
+        self.mode_comboBox.addItem(QString('Drop Mode'))
+        self.mode_comboBox.addItem(QString('Target Mode'))
+        self.mode_comboBox.addItem(QString('Hiker Mode'))
         self.mode_comboBox.currentIndexChanged.connect(self.load_wp_mode)
 
         # For signal handling
@@ -62,8 +66,16 @@ class WpWindow(QWidget):
         self.save_waypoints()
         if str(self.mode_comboBox.currentText()) == 'Main Mode':
             self.marble.wp_state = 'MainWP'
+        elif str(self.mode_comboBox.currentText()) == 'Path Mode':
+            self.marble.wp_state = 'PathWP'
         elif str(self.mode_comboBox.currentText()) == 'Search Mode':
             self.marble.wp_state = 'SearchWP'
+        elif str(self.mode_comboBox.currentText()) == 'Drop Mode':
+            self.marble.wp_state = 'DropWP'
+        elif str(self.mode_comboBox.currentText()) == 'Target Mode':
+            self.marble.wp_state = 'TargetWP'
+        elif str(self.mode_comboBox.currentText()) == 'Hiker Mode':
+            self.marble.wp_state = 'HikerWP'
         else:
             self.marble.wp_state = 'None'
         self.full_update()
@@ -89,16 +101,32 @@ class WpWindow(QWidget):
     def set_title(self): # needs new home map and wp_state
         if self.marble.wp_state == 'MainWP':
             self.waypoint_label.setText(QString('%s Main Waypoints' % self._home_map))
+        elif self.marble.wp_state == 'PathWP':
+            self.waypoint_label.setText(QString('%s Path Waypoints' % self._home_map))
         elif self.marble.wp_state == 'SearchWP':
             self.waypoint_label.setText(QString('%s Search Waypoints' % self._home_map))
+        elif self.marble.wp_state == 'DropWP':
+            self.waypoint_label.setText(QString('%s Bottle Drop Waypoints' % self._home_map))
+        elif self.marble.wp_state == 'TargetWP':
+            self.waypoint_label.setText(QString('%s Off-axis Target Waypoints' % self._home_map))
+        elif self.marble.wp_state == 'HikerWP':
+            self.waypoint_label.setText(QString('%s Hiker Waypoints' % self._home_map))
         else:
             self.waypoint_label.setText(QString('Choose a mode for %s' % self._home_map))
 
     def load_wp_from_file(self): # needs new home map and wp_state
         if self.marble.wp_state == 'MainWP':
             self.waypoints = map_info_parser.get_main_waypoints(self._home_map)
+        elif self.marble.wp_state == 'PathWP':
+            self.waypoints = map_info_parser.get_path_waypoints(self._home_map)
         elif self.marble.wp_state == 'SearchWP':
             self.waypoints = map_info_parser.get_search_waypoints(self._home_map)
+        elif self.marble.wp_state == 'DropWP':
+            self.waypoints = map_info_parser.get_drop_waypoints(self._home_map)
+        elif self.marble.wp_state == 'TargetWP':
+            self.waypoints = map_info_parser.get_target_waypoints(self._home_map)
+        elif self.marble.wp_state == 'HikerWP':
+            self.waypoints = map_info_parser.get_hiker_waypoints(self._home_map)
         else:
             self.waypoints = []
 
@@ -113,8 +141,16 @@ class WpWindow(QWidget):
         folder_file_name = ''
         if self.marble.wp_state == 'MainWP':
             folder_file_name = 'main_wps/%s_main_wps.txt' % self._home_map
+        elif self.marble.wp_state == 'PathWP':
+            folder_file_name = 'path_wps/%s_path_wps.txt' % self._home_map
         elif self.marble.wp_state == 'SearchWP':
             folder_file_name = 'search_wps/%s_search_wps.txt' % self._home_map
+        elif self.marble.wp_state == 'DropWP':
+            folder_file_name = 'drop_wps/%s_drop_wps.txt' % self._home_map
+        elif self.marble.wp_state == 'TargetWP':
+            folder_file_name = 'target_wps/%s_target_wps.txt' % self._home_map
+        elif self.marble.wp_state == 'HikerWP':
+            folder_file_name = 'hiker_wps/%s_hiker_wps.txt' % self._home_map
         else: # shouldn't be saving anything
             return
 
@@ -136,5 +172,5 @@ class WpWindow(QWidget):
 
     def closeEvent(self, QCloseEvent):
         self.save_waypoints()
-        self.marble.setInputEnabled(True)
-        self.marble._mouse_attentive = False
+        #self.marble.setInputEnabled(True)
+        #self.marble._mouse_attentive = False

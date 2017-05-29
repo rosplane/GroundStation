@@ -53,8 +53,8 @@ class MapWindow(QWidget):
         self._special_commands.clicked.connect(self.open_cm_window)
 
     def open_wp_window(self):
-        self._marble_map.setInputEnabled(False)
-        self._marble_map._mouse_attentive = True
+        #self._marble_map.setInputEnabled(False)
+        #self._marble_map._mouse_attentive = True
         self.wpWindow.show()
 
     def open_cm_window(self):

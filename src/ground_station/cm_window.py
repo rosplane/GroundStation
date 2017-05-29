@@ -13,6 +13,9 @@ import rospy
 from fcu_common.msg import FW_Waypoint
 from std_msgs.msg import Bool
 
+# import Michael's landing script here ++++++++++++++++++++++++++
+from landing_planner import publishwaypoints
+
 PWD = os.path.dirname(os.path.abspath(__file__))
 RTH_ALT = 10 # "return to home" command will have the plane fly 10 m above home pt
 
@@ -34,12 +37,6 @@ class CmWindow(QWidget):
         self.land_button.clicked.connect(self.land_command)
         self.drop_button.clicked.connect(self.drop_command)
         self.marble.WPH.wp_clicked.connect(self.clicked_waypoint)
-
-        # updating not needed, unless zero_sensors somehow comes to need it
-        #self._home_map = self.marble._home_map
-        # self.marble.latlon gives home location
-
-        #self.OWPP = Override_WP_Publisher()====================================================
 
     def zero_sensor_command(self):
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -73,17 +70,23 @@ class CmWindow(QWidget):
             #self.OWPP.publish_wp_to_plane(meter_data) =================================================
         '''
 
-    def land_command(self):
-        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        # maybe just make a OWP at altitude = 0, leading the plane on? +++++++++++
-        print('landing functionality pending')
+    def land_command(self): # ++++++++++++++++++++++++++++++++++++++++++++++
+        if self.marble.GIS.received_msg:
+            try:
+                lat = float(str(self.land_lat_field.toPlainText()))
+                lon = float(str(self.land_lon_field.toPlainText()))
+                chi = float(str(self.land_chi_field.toPlainText()))
+                meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, 0.0) # necessary ?
+                publishwaypoints(meter_data[0], meter_data[1], chi)
+            except ValueError:
+                print('Incorrectly formatted fields. Must all be numbers.')
 
     def drop_command(self):
         self.drop_pub.publish(True)
 
     def clicked_waypoint(self, lat, lon):
-        self.loiter_lat_field.setText(QString(str(lat)))
-        self.loiter_lon_field.setText(QString(str(lon)))
+        self.land_lat_field.setText(QString(str(lat)))
+        self.land_lon_field.setText(QString(str(lon)))
 
     def closeEvent(self, QCloseEvent):
         self.marble.setInputEnabled(True)

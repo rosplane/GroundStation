@@ -1,5 +1,13 @@
-- remove fluff
-- make graph graph the default topic
-- add directions for using better plot base
-- fix graph scaling
-- MERGE
+waypoint types:
+	- main (all waypoints in one)
+	- waypoint path (ones given by the competition)
+	- search
+	- bottle drop
+	- off-axis target
+	- hiker
+
+Long-term
+	- clean up code (using a custom widget class with static members that everyone can access)
+		- look for repetitive code, make everything modular (unique info originating from a single source)
+	- do we really want pop-up windows?
+	- to C++ for Ubuntu 16.04?

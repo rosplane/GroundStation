@@ -1,5 +1,5 @@
 import xml.etree.cElementTree as ET
-import os
+import os, errno
 
 PWD = os.path.dirname(os.path.abspath(__file__))
 INFO_FILE_PATH = os.path.join(PWD, 'resources', 'map_info.xml')
@@ -43,7 +43,12 @@ def get_waypoints(wp_file_path):
                 wp_list.append((lat, lon, alt, chi))
         return wp_list
     else:
-        # make a blank file
+        # make a blank file and directory, if necessary
+        try:
+            os.makedirs(os.path.dirname(wp_file_path))
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
         open(wp_file_path, 'a').close()
         return []
 
@@ -51,6 +56,22 @@ def get_main_waypoints(map_name):
     wp_file_path = os.path.join(PWD, 'resources', 'wp_data','main_wps', '%s_main_wps.txt' % map_name)
     return get_waypoints(wp_file_path)
 
+def get_path_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','path_wps', '%s_path_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
+
 def get_search_waypoints(map_name):
     wp_file_path = os.path.join(PWD, 'resources', 'wp_data','search_wps', '%s_search_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
+
+def get_drop_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','drop_wps', '%s_drop_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
+
+def get_target_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','target_wps', '%s_target_wps.txt' % map_name)
+    return get_waypoints(wp_file_path)
+
+def get_hiker_waypoints(map_name):
+    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','hiker_wps', '%s_hiker_wps.txt' % map_name)
     return get_waypoints(wp_file_path)

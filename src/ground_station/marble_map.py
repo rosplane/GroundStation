@@ -391,7 +391,8 @@ class MarbleMap(Marble.MarbleWidget):
         self.setShowOverviewMap(False)
 
         self.WPH = WP_Handler()
-        self.wp_state = 'None' # can be 'None', 'MainWP', 'SearchWP'
+        self.wp_state = 'None' # can be 'None','MainWP','PathWP','SearchWP',
+                               #        'DropWP','TargetWP','HikerWP'
         # For waypoint conversion
         self._home_map = map_info_parser.get_default()
         self.latlon = map_info_parser.get_latlon(self._home_map)

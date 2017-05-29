@@ -72,9 +72,9 @@
     </widget>
     <widget class="QWidget" name="tab_3">
      <attribute name="title">
-      <string>Loiter</string>
+      <string>Land</string><!--+++++++++++++++++++++++++++++++++++++-->
      </attribute>
-     <widget class="QTextEdit" name="loiter_lat_field">
+     <widget class="QTextEdit" name="land_lat_field">
       <property name="geometry">
        <rect>
         <x>260</x>
@@ -84,7 +84,7 @@
        </rect>
       </property>
      </widget>
-     <widget class="QTextEdit" name="loiter_lon_field">
+     <widget class="QTextEdit" name="land_lon_field">
       <property name="geometry">
        <rect>
         <x>260</x>
@@ -94,7 +94,7 @@
        </rect>
       </property>
      </widget>
-     <widget class="QTextEdit" name="loiter_alt_field">
+     <widget class="QTextEdit" name="land_chi_field">
       <property name="geometry">
        <rect>
         <x>260</x>
@@ -114,7 +114,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Loiter Point</string>
+       <string>Landing Point</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_3">
@@ -153,7 +153,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>feet</string>
+       <string>degrees</string>
       </property>
      </widget>
      <widget class="QLabel" name="label_6">
@@ -192,10 +192,10 @@
        </rect>
       </property>
       <property name="text">
-       <string>altitude:</string>
+       <string>chi:</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="loiter_button">
+     <widget class="QPushButton" name="land_button">
       <property name="geometry">
        <rect>
         <x>20</x>
@@ -205,7 +205,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Loiter about point</string>
+       <string>Land at point</string><!--++++++++++++++++++++++++++++++++++-->
       </property>
      </widget>
     </widget>
@@ -229,9 +229,9 @@
     </widget>
     <widget class="QWidget" name="tab_5">
      <attribute name="title">
-      <string>Land</string>
+      <string>Loiter</string>
      </attribute>
-     <widget class="QPushButton" name="land_button">
+     <widget class="QPushButton" name="loiter_button">
       <property name="geometry">
        <rect>
         <x>200</x>
@@ -241,7 +241,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>Land Plane</string>
+       <string>Loiter</string>
       </property>
      </widget>
     </widget>
