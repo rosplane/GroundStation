@@ -162,10 +162,10 @@ class WpWindow(QWidget):
     def transfer_waypoint_data(self): # needs new self.waypoints
         if self.marble.GIS.received_msg and not self.marble.wp_state == 'None':
             wp = self.waypoints[0]
-            meter_data = self.marble.GIS.GB.gps_to_ned(wp[0],wp[1], wp[2]/3.28084 - 22.0)
+            meter_data = self.marble.GIS.GB.gps_to_ned(wp[0],wp[1], (wp[2]-22.0)/3.28084)
             self.WPP.publish_wp_to_plane(meter_data, wp[3], True, False)
             for wp in self.waypoints[1:]:
-                meter_data = self.marble.GIS.GB.gps_to_ned(wp[0], wp[1], wp[2]/3.28084 - 22.0)
+                meter_data = self.marble.GIS.GB.gps_to_ned(wp[0], wp[1], (wp[2]-22.0)/3.28084)
                 self.WPP.publish_wp_to_plane(meter_data, wp[3], False, False)
 
     # MISCELLANEOUS

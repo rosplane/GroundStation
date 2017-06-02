@@ -45,7 +45,7 @@ class ArtificialHorizon(QtGui.QWidget):
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
             self.heading =  int (math.floor(state.psi*(180.0/math.pi)))
             self.speed =    int (math.floor(state.Va*1.94384))
-            self.altitude = int (math.floor(state.position[2]*(-3.28084)))
+            self.altitude = int (math.floor(state.position[2]*(-3.28084))) + 22 # ===============
             self.update()
             self.count = 0
 

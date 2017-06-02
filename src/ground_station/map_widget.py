@@ -1,6 +1,5 @@
 from python_qt_binding import loadUi
 from python_qt_binding.QtWidgets import QWidget
-from PyKDE4.marble import *
 
 from .manage_kml import ManageKML
 from .marble_map import MarbleMap
