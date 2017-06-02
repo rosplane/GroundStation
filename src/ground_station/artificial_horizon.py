@@ -2,7 +2,7 @@ import sys, math, rospy, random
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
 from PyQt4.QtGui import QColor, QBrush, QPen, QFont, QPolygon
-from fcu_common.msg import State, GPS
+from rosflight_msgs.msg import State, GPS
 
 class ArtificialHorizon(QtGui.QWidget):
     def __init__(self):

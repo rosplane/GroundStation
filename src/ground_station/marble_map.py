@@ -1,4 +1,4 @@
-from PyKDE4.marble import * # <<<<<<<<<<<<<<<<<<<<<<<<
+from PyKDE4.marble import * 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import os.path
@@ -7,7 +7,7 @@ from math import ceil, floor, sqrt, sin, asin, cos, acos, radians, degrees, fmod
 import map_info_parser
 import rospy
 from std_msgs.msg import String, Float32MultiArray
-from fcu_common.msg import State, GPS, RCRaw
+from rosflight_msgs.msg import State, GPS, RCRaw
 from ros_plane.msg import Current_Path, Waypoint
 from Signals import WP_Handler
 from .Geo import Geobase

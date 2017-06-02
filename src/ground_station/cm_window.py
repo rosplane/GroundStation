@@ -10,10 +10,9 @@ except ImportError:
 import os
 import map_info_parser
 import rospy
-from fcu_common.msg import FW_Waypoint
 from std_msgs.msg import Bool
 
-# import Michael's landing script here ++++++++++++++++++++++++++
+# import Michael's landing script
 from landing_planner import publishwaypoints
 
 PWD = os.path.dirname(os.path.abspath(__file__))
