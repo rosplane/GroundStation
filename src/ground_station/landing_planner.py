@@ -41,8 +41,8 @@ def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Setup approach 1
 	approach1 = Waypoint()
-	approach1.w[0] = land_point[0] - math.cos(approach_angle)*30
-	approach1.w[1] = land_point[1] - math.sin(approach_angle)*30
+	approach1.w[0] = land_point[0] - math.cos(approach_angle)*60
+	approach1.w[1] = land_point[1] - math.sin(approach_angle)*60
 	approach1.w[2] = -5.0
 	approach1.chi_d = approach_angle
 	approach1.Va_d = 5.0
@@ -53,8 +53,8 @@ def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Setup approach 2
 	approach2 = Waypoint()
-	approach2.w[0] = land_point[0] - math.cos(approach_angle)*60
-	approach2.w[1] = land_point[1] - math.sin(approach_angle)*60
+	approach2.w[0] = land_point[0] - math.cos(approach_angle)*120
+	approach2.w[1] = land_point[1] - math.sin(approach_angle)*120
 	approach2.w[2] = -10.0
 	approach2.chi_d = approach_angle
 	approach2.Va_d = 7.0
@@ -65,8 +65,8 @@ def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Setup approach 3
 	approach3 = Waypoint()
-	approach3.w[0] = land_point[0] - math.cos(approach_angle)*90
-	approach3.w[1] = land_point[1] - math.sin(approach_angle)*90
+	approach3.w[0] = land_point[0] - math.cos(approach_angle)*150
+	approach3.w[1] = land_point[1] - math.sin(approach_angle)*150
 	approach3.w[2] = -15.0
 	approach3.chi_d = approach_angle
 	approach3.Va_d = 7.0
@@ -77,8 +77,8 @@ def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Setup approach 4
 	approach4 = Waypoint()
-	approach4.w[0] = land_point[0] - math.cos(approach_angle)*160
-	approach4.w[1] = land_point[1] - math.sin(approach_angle)*160
+	approach4.w[0] = land_point[0] - math.cos(approach_angle)*300
+	approach4.w[1] = land_point[1] - math.sin(approach_angle)*300
 	approach4.w[2] = -33.0
 	approach4.chi_d = approach_angle
 	approach4.Va_d = 15.0
@@ -101,7 +101,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Setup downwind2
 	downwind2 = Waypoint()
-	downwind2.w[0] = land_point[0] + math.sin(approach_angle)*155*direction + math.cos(approach_angle)*155 
+	downwind2.w[0] = land_point[0] + math.sin(approach_angle)*155*direction + math.cos(approach_angle)*155
 	downwind2.w[1] = land_point[1] + math.cos(approach_angle)*155*direction + math.sin(approach_angle)*155
 	downwind2.w[2] = -33.0
 	downwind2.chi_d = approach_angle
