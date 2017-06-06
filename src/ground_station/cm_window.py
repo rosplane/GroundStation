@@ -75,8 +75,9 @@ class CmWindow(QWidget):
                 lat = float(str(self.land_lat_field.toPlainText()))
                 lon = float(str(self.land_lon_field.toPlainText()))
                 chi = float(str(self.land_chi_field.toPlainText()))
+                direction = float(str(self.land_direction_field.toPlainText()))
                 meter_data = self.marble.GIS.GB.gps_to_ned(lat, lon, 0.0) # necessary ?
-                publishwaypoints(meter_data[0], meter_data[1], chi)
+                publishwaypoints(meter_data[0], meter_data[1], chi, direction)
             except ValueError:
                 print('Incorrectly formatted fields. Must all be numbers.')
 

@@ -28,6 +28,7 @@ class WP_Publisher():
         wp_obj.land = land  # True if in landing mode
         wp_obj.Va_d = 15.0 # m/s
         wp_obj.set_current = False # sets to be executed now
+        wp_obj.drop = False
         self.pub.publish(wp_obj)
 
 class WpWindow(QWidget):

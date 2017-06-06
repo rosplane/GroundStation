@@ -10,7 +10,7 @@ import sys
 #lp2 = sys.argv[2]
 #aa = sys.argv[3]
 
-def publishwaypoints(lp1, lp2, aa):
+def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Init ROS Node
 	#rospy.init_node('landing_path_planner', anonymous=True)
@@ -38,11 +38,12 @@ def publishwaypoints(lp1, lp2, aa):
 	land.set_current = False
 	land.reset = False
 	land.land = True # True to land now
+	land.drop = False
 
 	# Setup approach 1
 	approach1 = Waypoint()
-	approach1.w[0] = land_point[0] - math.cos(approach_angle)*30
-	approach1.w[1] = land_point[1] - math.sin(approach_angle)*30
+	approach1.w[0] = land_point[0] - math.cos(approach_angle)*60
+	approach1.w[1] = land_point[1] - math.sin(approach_angle)*60
 	approach1.w[2] = -5.0
 	approach1.chi_d = approach_angle
 	approach1.Va_d = 5.0
@@ -50,11 +51,12 @@ def publishwaypoints(lp1, lp2, aa):
 	approach1.set_current = False
 	approach1.reset = False
 	approach1.land = True
+	approach1.drop = False
 
 	# Setup approach 2
 	approach2 = Waypoint()
-	approach2.w[0] = land_point[0] - math.cos(approach_angle)*60
-	approach2.w[1] = land_point[1] - math.sin(approach_angle)*60
+	approach2.w[0] = land_point[0] - math.cos(approach_angle)*120
+	approach2.w[1] = land_point[1] - math.sin(approach_angle)*120
 	approach2.w[2] = -10.0
 	approach2.chi_d = approach_angle
 	approach2.Va_d = 7.0
@@ -62,11 +64,12 @@ def publishwaypoints(lp1, lp2, aa):
 	approach2.set_current = False
 	approach2.reset = False
 	approach2.land = True
+	approach2.drop = False
 
 	# Setup approach 3
 	approach3 = Waypoint()
-	approach3.w[0] = land_point[0] - math.cos(approach_angle)*90
-	approach3.w[1] = land_point[1] - math.sin(approach_angle)*90
+	approach3.w[0] = land_point[0] - math.cos(approach_angle)*150
+	approach3.w[1] = land_point[1] - math.sin(approach_angle)*150
 	approach3.w[2] = -15.0
 	approach3.chi_d = approach_angle
 	approach3.Va_d = 7.0
@@ -74,11 +77,12 @@ def publishwaypoints(lp1, lp2, aa):
 	approach3.set_current = False
 	approach3.reset = False
 	approach3.land = False
+	approach3.drop = False
 
 	# Setup approach 4
 	approach4 = Waypoint()
-	approach4.w[0] = land_point[0] - math.cos(approach_angle)*160
-	approach4.w[1] = land_point[1] - math.sin(approach_angle)*160
+	approach4.w[0] = land_point[0] - math.cos(approach_angle)*300
+	approach4.w[1] = land_point[1] - math.sin(approach_angle)*300
 	approach4.w[2] = -33.0
 	approach4.chi_d = approach_angle
 	approach4.Va_d = 15.0
@@ -86,6 +90,33 @@ def publishwaypoints(lp1, lp2, aa):
 	approach4.set_current = False
 	approach4.reset = True
 	approach4.land = False
+	approach4.drop = False
+
+	# Setup downwind1
+	downwind1 = Waypoint()
+	downwind1.w[0] = land_point[0] + math.sin(approach_angle)*155*direction
+	downwind1.w[1] = land_point[1] + math.cos(approach_angle)*155*direction
+	downwind1.w[2] = -33.0
+	downwind1.chi_d = approach_angle
+	downwind1.Va_d = 15.0
+	downwind1.chi_valid = True # True
+	downwind1.set_current = False
+	downwind1.reset = True
+	downwind1.land = False
+	downwind1.drop = False
+
+	# Setup downwind2
+	downwind2 = Waypoint()
+	downwind2.w[0] = land_point[0] + math.sin(approach_angle)*155*direction + math.cos(approach_angle)*155
+	downwind2.w[1] = land_point[1] + math.cos(approach_angle)*155*direction + math.sin(approach_angle)*155
+	downwind2.w[2] = -33.0
+	downwind2.chi_d = approach_angle
+	downwind2.Va_d = 15.0
+	downwind2.chi_valid = True # True
+	downwind2.set_current = False
+	downwind2.reset = True
+	downwind2.land = False
+	downwind2.drop = False
 
 	# Overshoot
 	land_p1 = Waypoint()
@@ -99,6 +130,7 @@ def publishwaypoints(lp1, lp2, aa):
 	land_p1.set_current = False
 	land_p1.reset = False
 	land_p1.land = True # True to land now
+	land_p1.drop = False
 
 	# Overshoot2
 	land_p2 = Waypoint()
@@ -112,6 +144,7 @@ def publishwaypoints(lp1, lp2, aa):
 	land_p2.set_current = False
 	land_p2.reset = False
 	land_p2.land = True # True to land now
+	land_p2.drop = False
 
 	# Overshoot2
 	land_p3 = Waypoint()
@@ -125,8 +158,9 @@ def publishwaypoints(lp1, lp2, aa):
 	land_p3.set_current = False
 	land_p3.reset = False
 	land_p3.land = True # True to land now
+	land_p3.drop = False
 
-	waypoints = [approach4, approach3, approach2, approach1, land, land_p1, land_p2, land_p3]
+	waypoints = [downwind1, downwind2, approach4, approach3, approach2, approach1, land, land_p1, land_p2, land_p3]
 	# print land.Va_d, approach1.Va_d, approach3.Va_d
 
     # Loop through each waypoint
