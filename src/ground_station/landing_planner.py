@@ -38,6 +38,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	land.set_current = False
 	land.reset = False
 	land.land = True # True to land now
+	land.drop = False
 
 	# Setup approach 1
 	approach1 = Waypoint()
@@ -50,6 +51,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	approach1.set_current = False
 	approach1.reset = False
 	approach1.land = True
+	approach1.drop = False
 
 	# Setup approach 2
 	approach2 = Waypoint()
@@ -62,6 +64,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	approach2.set_current = False
 	approach2.reset = False
 	approach2.land = True
+	approach2.drop = False
 
 	# Setup approach 3
 	approach3 = Waypoint()
@@ -74,6 +77,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	approach3.set_current = False
 	approach3.reset = False
 	approach3.land = False
+	approach3.drop = False
 
 	# Setup approach 4
 	approach4 = Waypoint()
@@ -86,6 +90,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	approach4.set_current = False
 	approach4.reset = True
 	approach4.land = False
+	approach4.drop = False
 
 	# Setup downwind1
 	downwind1 = Waypoint()
@@ -98,6 +103,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	downwind1.set_current = False
 	downwind1.reset = True
 	downwind1.land = False
+	downwind1.drop = False
 
 	# Setup downwind2
 	downwind2 = Waypoint()
@@ -110,6 +116,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	downwind2.set_current = False
 	downwind2.reset = True
 	downwind2.land = False
+	downwind2.drop = False
 
 	# Overshoot
 	land_p1 = Waypoint()
@@ -123,6 +130,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	land_p1.set_current = False
 	land_p1.reset = False
 	land_p1.land = True # True to land now
+	land_p1.drop = False
 
 	# Overshoot2
 	land_p2 = Waypoint()
@@ -136,6 +144,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	land_p2.set_current = False
 	land_p2.reset = False
 	land_p2.land = True # True to land now
+	land_p2.drop = False
 
 	# Overshoot2
 	land_p3 = Waypoint()
@@ -149,6 +158,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	land_p3.set_current = False
 	land_p3.reset = False
 	land_p3.land = True # True to land now
+	land_p3.drop = False
 
 	waypoints = [downwind1, downwind2, approach4, approach3, approach2, approach1, land, land_p1, land_p2, land_p3]
 	# print land.Va_d, approach1.Va_d, approach3.Va_d
