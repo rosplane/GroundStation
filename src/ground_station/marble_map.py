@@ -1,4 +1,4 @@
-from PyKDE4.marble import * 
+from PyKDE4.marble import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import os.path
@@ -174,8 +174,14 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def dnToLat(self, dn):
         return self.marble.GIS.plane_latlon[0] + degrees(asin(dn/self.R))
 
+    def dnToLat_HP(self, dn): # uses home pt instead of plane lat, lon
+        return self.marble.latlon[0] + degrees(asin(dn/self.R))
+
     def deToLon(self, de):
         return self.marble.GIS.plane_latlon[1] + degrees(asin(de/(cos(radians(self.marble.GIS.plane_latlon[0]))*self.R)))
+
+    def deToLon_HP(self, de): # uses home pt instead of plane lat, lon
+        return self.marble.latlon[1] + degrees(asin(de/(cos(radians(self.marble.latlon[0]))*self.R)))
 
     def renderPosition(self): # So that Marble knows where to paint
         return ['SURFACE']
@@ -189,11 +195,13 @@ class PaintLayer(Marble.LayerInterface, QObject):
         if (self.marble.zoom() > 2700):
             self.drawStationaryObstacles(painter)
             self.drawMovingObstacles(painter)
+            if self.marble.view_full_path:
+                self.drawFullCurrentPath(painter)
             if self.use_interop_boundaries:
                 self.drawMissionDetails(painter)
         if self.marble.GIS.received_msg:
-            self.drawPlane(painter) # Plane on top of all other items in drawing
             self.drawCurPath(painter)
+            self.drawPlane(painter) # Plane on top of all other items in drawing
         return True
 
     def rotate_x(self, x, y, a):
@@ -201,6 +209,34 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
     def rotate_y(self, x, y, a):
         return -1 * x * sin(a) + y * cos(a)
+
+    def drawFullCurrentPath(self, painter):
+        # receive list of curr_path objects from wp_window (with marble obj as bridge)
+        painter.setPen(QPen(QBrush(Qt.green), 3.5, Qt.SolidLine, Qt.RoundCap))
+        for curPath in self.marble.current_path_NED_list: # +++++++++++++++++++++++++++++++++++++++++++++
+            if curPath.flag == True:
+                r = curPath.r
+                q = curPath.q
+                scale = 100
+                pt_1 = [r[1],r[0]]
+                pt_2 = [q[1],q[0]]
+                line_1 = Marble.GeoDataLineString()
+                line_1.append(Marble.GeoDataCoordinates(self.deToLon_HP(pt_1[0]), self.dnToLat_HP(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+                line_1.append(Marble.GeoDataCoordinates(self.deToLon_HP(pt_2[0]), self.dnToLat_HP(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+                painter.drawPolyline(line_1)
+            else:
+                c = curPath.c
+                R = curPath.rho
+                top_left = Marble.GeoDataCoordinates(self.deToLon_HP(c[1] - R), self.dnToLat_HP(c[0] + R), 0.0, Marble.GeoDataCoordinates.Degree)
+                bottom_right = Marble.GeoDataCoordinates(self.deToLon_HP(c[1] + R), self.dnToLat_HP(c[0] - R), 0.0, Marble.GeoDataCoordinates.Degree)
+                painter.drawArc(
+                    QRectF(top_left, bottom_right),
+                    16*r[0], 16*q[0]
+                )
+                referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
+
+                pixelRadius = ceil(6.8*67*R/referenceDistance)
+                painter.drawEllipse(location, pixelRadius, pixelRadius)
 
     def drawCurPath(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
@@ -396,8 +432,8 @@ class MarbleMap(Marble.MarbleWidget):
         # For waypoint conversion
         self._home_map = map_info_parser.get_default()
         self.latlon = map_info_parser.get_latlon(self._home_map)
-        #self.GB = Geobase(self.latlon[0], self.latlon[1])
-        self.GIS = GPSInitSubscriber() # ++++++++++++++++++++++++++++++++++++++++++++++
+        self.GB = Geobase(self.latlon[0], self.latlon[1]) # For full current path drawer
+        self.GIS = GPSInitSubscriber()
 
         self._map_coords = map_info_parser.get_gps_dict()
         def_latlonzoom = self._map_coords[self._home_map]
@@ -409,6 +445,9 @@ class MarbleMap(Marble.MarbleWidget):
         self.addLayer(paintlayer)
         self.seconds_tests = [2.0/3600, 5.0/3600, 15.0/3600, 30.0/3600, 60.0/3600]
         self.num_s_tests = len(self.seconds_tests)
+
+        self.view_full_path = False
+        self.current_path_NED_list = []
 
     def mousePressEvent(self, QMouseEvent): # only use if popup window is open===============
         if self._mouse_attentive:
@@ -450,12 +489,18 @@ class MarbleMap(Marble.MarbleWidget):
             else: # Do nothing ===========================
                 print 'Not found. Zoom in!'
 
+    def path_viewer_toggle(self, state_integer):
+        if state_integer == 2: # checkbox checked
+            self.view_full_path = True
+        else: # checkbox unchecked
+            self.view_full_path = False
+
     def change_home(self, map_name):
         self._home_map = map_name
         latlonzoom = self._map_coords[self._home_map]
         self._home_pt = Marble.GeoDataCoordinates(latlonzoom[1], latlonzoom[0], 0.0, Marble.GeoDataCoordinates.Degree)
         self.latlon = map_info_parser.get_latlon(self._home_map)
-        #self.GB = Geobase(self.latlon[0], self.latlon[1])
+        self.GB = Geobase(self.latlon[0], self.latlon[1])
         self.centerOn(self._home_pt)
         self.setZoom(latlonzoom[2])
         self.update()

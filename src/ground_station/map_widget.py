@@ -33,6 +33,8 @@ class MapWindow(QWidget):
         self._home_opts.setCurrentIndex(list(map_coords).index(map_info_parser.get_default()))
         self._home_opts.currentIndexChanged[str].connect(self._update_home)
 
+        self._pathviewer_toggle.stateChanged[int].connect(self._marble_map.path_viewer_toggle)
+
         self.init_manage_kml()
         self.init_wp_window()
         self.init_cm_window()

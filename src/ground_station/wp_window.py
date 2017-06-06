@@ -1,6 +1,6 @@
 from python_qt_binding import loadUi
 from PyQt4.Qt import *
-#from PyQt4 import QtGui
+from current_path_generator import get_full_current_path
 
 try:
     from PyQt4.QtCore import QString
@@ -88,15 +88,29 @@ class WpWindow(QWidget):
     # UPDATE HANDLERS
 
     def full_update(self):
+        self.NED_waypoints = []
         for i in range(len(self.waypoints)): # clear map waypoints
             self.marble.WPH.emit_removed(0)
         self.load_wp_from_file() # update self.waypoints
+        if not self.marble.wp_state == 'None':
+            self.compile_NED_waypoints()
+            self.marble.current_path_NED_list = get_full_current_path(self.NED_waypoints)
         self.update_lists() # update wp_window contents
         self.set_title()
         for i, wp in enumerate(self.waypoints): # update map waypoints
             self.marble.WPH.emit_inserted(wp[0], wp[1], wp[2], i)
 
     # UPDATE FUNCTIONS
+
+    def compile_NED_waypoints(self):
+        # make dummy first waypoint at home point for the path manager algorithm
+        meter_data = self.marble.GB.gps_to_ned(self.marble.latlon[0] ,self.marble.latlon[1],
+                                               (self.waypoints[0][2]-22.0)/3.28084)
+        self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], self.waypoints[0][3]])
+
+        for wp in self.waypoints:
+            meter_data = self.marble.GB.gps_to_ned(wp[0],wp[1], (wp[2]-22.0)/3.28084)
+            self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], wp[3]])
 
     def set_title(self): # needs new home map and wp_state
         if self.marble.wp_state == 'MainWP':
