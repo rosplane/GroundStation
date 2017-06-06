@@ -10,7 +10,7 @@ import sys
 #lp2 = sys.argv[2]
 #aa = sys.argv[3]
 
-def publishwaypoints(lp1, lp2, aa):
+def publishwaypoints(lp1, lp2, aa, direction):
 
 	# Init ROS Node
 	#rospy.init_node('landing_path_planner', anonymous=True)
@@ -87,6 +87,30 @@ def publishwaypoints(lp1, lp2, aa):
 	approach4.reset = True
 	approach4.land = False
 
+	# Setup downwind1
+	downwind1 = Waypoint()
+	downwind1.w[0] = land_point[0] + math.sin(approach_angle)*155*direction
+	downwind1.w[1] = land_point[1] + math.cos(approach_angle)*155*direction
+	downwind1.w[2] = -33.0
+	downwind1.chi_d = approach_angle
+	downwind1.Va_d = 15.0
+	downwind1.chi_valid = True # True
+	downwind1.set_current = False
+	downwind1.reset = True
+	downwind1.land = False
+
+	# Setup downwind2
+	downwind2 = Waypoint()
+	downwind2.w[0] = land_point[0] + math.sin(approach_angle)*155*direction + math.cos(approach_angle)*155 
+	downwind2.w[1] = land_point[1] + math.cos(approach_angle)*155*direction + math.sin(approach_angle)*155
+	downwind2.w[2] = -33.0
+	downwind2.chi_d = approach_angle
+	downwind2.Va_d = 15.0
+	downwind2.chi_valid = True # True
+	downwind2.set_current = False
+	downwind2.reset = True
+	downwind2.land = False
+
 	# Overshoot
 	land_p1 = Waypoint()
 	land_p1.w[0] = land_point[0] + math.cos(approach_angle)*100
@@ -126,7 +150,7 @@ def publishwaypoints(lp1, lp2, aa):
 	land_p3.reset = False
 	land_p3.land = True # True to land now
 
-	waypoints = [approach4, approach3, approach2, approach1, land, land_p1, land_p2, land_p3]
+	waypoints = [downwind1, downwind2, approach4, approach3, approach2, approach1, land, land_p1, land_p2, land_p3]
 	# print land.Va_d, approach1.Va_d, approach3.Va_d
 
     # Loop through each waypoint
