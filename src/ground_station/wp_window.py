@@ -105,9 +105,9 @@ class WpWindow(QWidget):
 
     def compile_NED_waypoints(self):
         # make dummy first waypoint at home point for the path manager algorithm
-        meter_data = self.marble.GB.gps_to_ned(self.marble.latlon[0] ,self.marble.latlon[1],
-                                               (self.waypoints[0][2]-22.0)/3.28084)
-        self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], self.waypoints[0][3]])
+        #meter_data = self.marble.GB.gps_to_ned(self.marble.latlon[0] ,self.marble.latlon[1],
+        #                                       (self.waypoints[0][2]-22.0)/3.28084)
+        #self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], self.waypoints[0][3]])
 
         for wp in self.waypoints:
             meter_data = self.marble.GB.gps_to_ned(wp[0],wp[1], (wp[2]-22.0)/3.28084)

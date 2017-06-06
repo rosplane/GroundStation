@@ -87,7 +87,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
 
         # functions
         def iterate(self):
-            inpt = 'None'  # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             outputs = self.manage(self.params)
             self.current_path_publisher(outputs)
 
@@ -138,7 +137,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
                 self.index_a = 0
             else:
                 self.index_a += 1
-            
+
             return output
 
         def rotz(self, theta):
@@ -315,7 +314,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
 
             L, cs, lam_s, ce, lam_e, z1, q1, z2, z3, q3 = dp_out
 
-            points = self.points_along_circle(cs, pe, z1, delta)
+            points = self.points_along_circle(cs, ps, z1, delta)
             points += self.points_along_path(z1, z2, delta)
             points += self.points_along_circle(ce, z2, z3, delta)
             return points
@@ -354,19 +353,28 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             theta_step = delta / rad
             num_steps = int((end_ang-start_ang)/theta_step)
             points = []
+            print "start_ang", start_ang
+            print "end_ang", end_ang
+            print "theta_step", theta_step
             for i in range(num_steps):
-                x = center.item(0) + rad * cos(start_ang + i * theta_step)
-                y = center.item(1) + rad * sin(start_ang + i * theta_step)
+                x = center.item(0) + rad * sin(start_ang + i * theta_step)
+                y = center.item(1) + rad * cos(start_ang + i * theta_step)
                 z = center.item(2)
                 points.append(np.array([x, y, z]))
-            points.append(np.array([end_pos.item(0), end_pos.item(1), end_pos.item(2)]))
+                #points.insert(0, np.array([x, y, z]))
+            # points.append(np.array([end_pos.item(0), end_pos.item(1), end_pos.item(2)]))
             return points
 
     manager = path_manager_base(wp_list)
 
+    #for i in range(0,2):
+    #    manager.iterate()
+
+    #'''
     while not manager.index_a == 0:
         manager.iterate()
-    manager.iterate() # for circling back to home
+    #manager.iterate() # for circling back to home
+    #'''
 
     #print manager.point_list
     return manager.point_list
