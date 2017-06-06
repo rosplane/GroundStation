@@ -213,30 +213,13 @@ class PaintLayer(Marble.LayerInterface, QObject):
     def drawFullCurrentPath(self, painter):
         # receive list of curr_path objects from wp_window (with marble obj as bridge)
         painter.setPen(QPen(QBrush(Qt.green), 3.5, Qt.SolidLine, Qt.RoundCap))
-        for curPath in self.marble.current_path_NED_list: # +++++++++++++++++++++++++++++++++++++++++++++
-            if curPath.flag == True:
-                r = curPath.r
-                q = curPath.q
-                scale = 100
-                pt_1 = [r[1],r[0]]
-                pt_2 = [q[1],q[0]]
-                line_1 = Marble.GeoDataLineString()
-                line_1.append(Marble.GeoDataCoordinates(self.deToLon_HP(pt_1[0]), self.dnToLat_HP(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-                line_1.append(Marble.GeoDataCoordinates(self.deToLon_HP(pt_2[0]), self.dnToLat_HP(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-                painter.drawPolyline(line_1)
-            else:
-                c = curPath.c
-                R = curPath.rho
-                top_left = Marble.GeoDataCoordinates(self.deToLon_HP(c[1] - R), self.dnToLat_HP(c[0] + R), 0.0, Marble.GeoDataCoordinates.Degree)
-                bottom_right = Marble.GeoDataCoordinates(self.deToLon_HP(c[1] + R), self.dnToLat_HP(c[0] - R), 0.0, Marble.GeoDataCoordinates.Degree)
-                painter.drawArc(
-                    QRectF(top_left, bottom_right),
-                    16*r[0], 16*q[0]
-                )
-                referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())*1000
-
-                pixelRadius = ceil(6.8*67*R/referenceDistance)
-                painter.drawEllipse(location, pixelRadius, pixelRadius)
+        curpath_line = Marble.GeoDataLineString()
+        for pathNEPoint in self.marble.current_path_NE_list: # list of (North, East) tuples for rendering
+            pt_lon = self.deToLon_HP(pathNEPoint[1])
+            pt_lat = self.dnToLat_HP(pathNEPoint[0])
+            pt = Marble.GeoDataCoordinates(pt_lon, pt_lat, 0.0, Marble.GeoDataCoordinates.Degree)
+            curpath_line.append(pt)
+        painter.drawPolyline(curpath_line)
 
     def drawCurPath(self, painter):
         painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
@@ -447,7 +430,7 @@ class MarbleMap(Marble.MarbleWidget):
         self.num_s_tests = len(self.seconds_tests)
 
         self.view_full_path = False
-        self.current_path_NED_list = []
+        self.current_path_NE_list = []
 
     def mousePressEvent(self, QMouseEvent): # only use if popup window is open===============
         if self._mouse_attentive:

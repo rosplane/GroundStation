@@ -95,7 +95,7 @@ class WpWindow(QWidget):
         self.load_wp_from_file() # update self.waypoints
         if not self.marble.wp_state == 'None':
             self.compile_NED_waypoints()
-            self.marble.current_path_NED_list = get_full_current_path(self.NED_waypoints)
+            self.marble.current_path_NE_list = get_full_current_path(self.NED_waypoints)
         self.update_lists() # update wp_window contents
         self.set_title()
         for i, wp in enumerate(self.waypoints): # update map waypoints
