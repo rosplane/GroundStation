@@ -1,10 +1,5 @@
 #!/usr/bin/python
 
-# interacts with wp_window
-# Take in list of waypoints, return list of current_path objects
-
-# takes from ros_plane functions in a very modular, replaceable way
-
 import rospy
 from ros_plane.msg import Current_Path
 from math import *
@@ -20,14 +15,22 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
         mod = phi % (2 * np.pi)
         return mod
 
+    def map_pos_2pi(phi):
+        if phi > 2*pi:
+            while phi > 2*pi:
+                phi -= 2*pi
+        elif phi < 0:
+            while phi < 0:
+                phi += 2*pi
+        return phi
+
     class path_manager_base:
 
         # Init function
         def __init__(self, wp_list):
 
             # Init Params
-            self.params = self.params_s()
-            self.params.R_min = rospy.get_param('R_min', 75.0)
+            self.R_min = rospy.get_param('R_min', 75.0)
 
             # waypoint 0 should be initial position, waypoint 1 where you want to start flying to
             self.index_a = 1
@@ -35,7 +38,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             # Class members
             self._num_waypoints = 0
             self.i = 0
-            self.state = 1
             self.Va = 15  # dummy value
 
             # Member objects; initialize waypoints
@@ -65,21 +67,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             Va_d = 0.0
             land = False
 
-        # output for current_path
-        class output_s():
-            # Inicates strait line or orbital path (true is line, false is orbit)
-            flag = True
-            Va_d = 0.0  # Desired airspeed (m/s)
-            r = [0.0, 0.0, 0.0]  # Vector to origin of straight line path (m)
-            # Unit vector, desired direction of travel for line path
-            q = [0.0, 0.0, 0.0]
-            c = [0.0, 0.0, 0.0]  # Center of orbital path (m)
-            rho = 0.0  # Radius of orbital path (m)
-            lambda_ = 1  # Direction of orbital path (cw is 1, ccw is -1)
-
-        class params_s():
-            R_min = 0.0  # Minimum turning radius
-
         # Class Member Functions
 
         def current_path_publisher(self, output):
@@ -87,35 +74,27 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
 
         # functions
         def iterate(self):
-            outputs = self.manage(self.params)
+            outputs = self.manage()
             self.current_path_publisher(outputs)
 
-        def manage(self, params):
+        def manage(self):
+            output = []
 
             # Calc distance between waypoints
-            if (self._num_waypoints >= 2):
-                start = np.array(
+            start = np.array(
                     [self._waypoints[self.index_a - 1].w0, self._waypoints[self.index_a - 1].w1])
-                end = np.array([self._waypoints[self.index_a].w0,
-                               self._waypoints[self.index_a].w1])
-                dist = np.linalg.norm(start - end)
+            end = np.array([self._waypoints[self.index_a].w0,
+                            self._waypoints[self.index_a].w1])
+            dist = np.linalg.norm(start - end)
 
-            if self._num_waypoints < 3:
-                rospy.logwarn('ERROR: less than 2 waypoints!!!')
-
-            elif self._num_waypoints >= 3 and (dist < 2 * self.params.R_min):
-                # If good to go at takeoff OR headed to landing point OR Distance between waypoints < 2R
+            if dist < 2 * self.R_min:
                 output = self.manage_line()
             else:
-                output = self.manage_dubins(params)
-
+                output = self.manage_dubins()
+            
             return output
 
-        def manage_dubins(self, params):
-
-            print 'DUBINS'
-
-            R_min = params.R_min
+        def manage_dubins(self):
 
             now = self._waypoints[self.index_a]
             past = self.waypoint_temp()
@@ -146,16 +125,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
                             [0.0, 0.0, 1.0]])
             return R
 
-        def mo(self,inpt):
-            val = 0.0
-            if (inpt > 0):
-                val = fmod(inpt, 2*M_PI_F)
-            else:
-                n = 0.0
-                n = floor(inpt/2/M_PI_F)
-                val = inpt - n*2*M_PI_F
-            return val
-
         def normalize(self, v):
             # Theres probably a better way to do this, but his is what works
             # norm=np.linalg.norm(v, ord=1) # tried this, but it didn't work, result in vector that sums to 1 not magnitude 1
@@ -180,8 +149,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             cls = ps + R * np.matmul(self.rotz(-np.pi/2), np.array([[cos(chi_s)], [sin(chi_s)], [0]]))
             cre = pe + R * np.matmul(self.rotz(np.pi/2), np.array([[cos(chi_e)], [sin(chi_e)], [0]]))
             cle = pe + R * np.matmul(self.rotz(-np.pi/2), np.array([[cos(chi_e)], [sin(chi_e)], [0]]))
-            # print "cle"
-            # print cle
 
             # compute length for case 1 rsr
             ang = atan2(cre.item(1)-crs.item(1), cre.item(0)-crs.item(0))
@@ -214,7 +181,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             ang = atan2(cle.item(1)-cls.item(1), cle.item(0)-cls.item(0))
             L4 = np.linalg.norm(cls-cle) + R * mod2pi(2 * np.pi + mod2pi(chi_s + np.pi / 2) - mod2pi(ang + np.pi / 2)) \
                  + R * mod2pi(2 * np.pi + mod2pi(ang + np.pi / 2) - mod2pi(chi_e + np.pi / 2))
-
+            
             lengths = [L1, L2, L3, L4]
             if min(lengths) == L1:
                 cs = crs
@@ -250,7 +217,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
                 z1 = cs + R * np.matmul(self.rotz(ang + ang2), e1)
                 z2 = ce + R * np.matmul(self.rotz(ang + ang2 -np.pi), e1)
 
-            # elif min(lengths) == L4:
             else:
                 cs = cls
                 lam_s = -1
@@ -275,14 +241,11 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
 
             b = self._waypoints[self.index_a]
             a = self.waypoint_temp()
-            # c = self.waypoint_temp()
 
             if (self.index_a == (self._num_waypoints - 1)):
                 a = self._waypoints[self.index_a - 1]
-                # c = self._waypoints[0]
             elif (self.index_a == 0):
                 a = self._waypoints[self._num_waypoints - 1]
-                # c = self._waypoints[self.index_a + 1]
             else:
                 a = self._waypoints[self.index_a - 1]
 
@@ -307,16 +270,16 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             """
             ps = np.array([[start.w0], [start.w1], [start.w2]])
             pe = np.array([[end.w0], [end.w1], [end.w2]])
-            dp_out = self.dubinsParameters(ps, start.chi_d, pe, end.chi_d,self.params.R_min)
-            # L, cs, lam_s, ce, lam_e, z1, q1, z2, z3, q3 = self.dubinsParameters(start.pos, start.chi, end.pos, end.chi)
+            dp_out = self.dubinsParameters(ps, start.chi_d, pe, end.chi_d, self.R_min)
+
             if dp_out == 0:
                 return False
 
             L, cs, lam_s, ce, lam_e, z1, q1, z2, z3, q3 = dp_out
 
-            points = self.points_along_circle(cs, ps, z1, delta)
+            points = self.points_along_circle(cs, ps, z1, delta, lam_s)
             points += self.points_along_path(z1, z2, delta)
-            points += self.points_along_circle(ce, z2, z3, delta)
+            points += self.points_along_circle(ce, z2, z3, delta, lam_e)
             return points
 
         def points_along_path(self, start_pos, end_pos, delta):
@@ -337,7 +300,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             points.append((end_pos.item(0),end_pos.item(1)))
             return points
 
-        def points_along_circle(self, center, start_pos, end_pos, delta):
+        def points_along_circle(self, center, start_pos, end_pos, delta, lam):
             """
             Calculates points along a circular arc segment defined by a start, end and center
             position spaced out by a distance of delta
@@ -345,36 +308,47 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             :param start_pos:
             :param end_pos:
             :param delta:
+            :param lambda:
             :return:
             """
             rad = np.linalg.norm(center-start_pos)
-            start_ang = atan2(start_pos.item(0)-center.item(0), start_pos.item(1)-center.item(1))
-            end_ang = atan2(end_pos.item(0)-center.item(0), end_pos.item(1)-center.item(1))
-            theta_step = delta / rad
-            num_steps = int((end_ang-start_ang)/theta_step)
+            theta_step = delta / rad # will always be positive
             points = []
-            print "start_ang", start_ang
-            print "end_ang", end_ang
-            print "theta_step", theta_step
-            for i in range(num_steps):
-                x = center.item(0) + rad * sin(start_ang + i * theta_step)
-                y = center.item(1) + rad * cos(start_ang + i * theta_step)
-                z = center.item(2)
-                points.append(np.array([x, y, z]))
-                #points.insert(0, np.array([x, y, z]))
-            # points.append(np.array([end_pos.item(0), end_pos.item(1), end_pos.item(2)]))
+
+            start_ang = map_pos_2pi(atan2(start_pos.item(0)-center.item(0), start_pos.item(1)-center.item(1)))
+            end_ang = map_pos_2pi(atan2(end_pos.item(0)-center.item(0), end_pos.item(1)-center.item(1)))
+
+            if lam < 0: # counter-clockwise rendering, incrementing theta
+                if end_ang - start_ang < 0: # end angle must be greater than start angle
+                    start_ang -= 2*pi
+
+                num_steps = int((end_ang-start_ang)/theta_step) # positive
+
+                for i in range(num_steps):
+                    x = center.item(0) + rad * sin(start_ang + i * theta_step)
+                    y = center.item(1) + rad * cos(start_ang + i * theta_step)
+                    points.append(np.array([x, y]))
+
+            if lam > 0: # clockwise rendering, decrementing theta
+                if end_ang - start_ang > 0: # end angle must be smaller than start angle
+                    end_ang -= 2*pi
+
+                num_steps = int((end_ang-start_ang)/theta_step) # negative
+
+                for i in range(0, num_steps, -1):
+                    x = center.item(0) + rad * sin(start_ang + i * theta_step)
+                    y = center.item(1) + rad * cos(start_ang + i * theta_step)
+                    points.append(np.array([x, y]))
+
+            points.append(np.array([end_pos.item(0), end_pos.item(1), end_pos.item(2)]))
             return points
 
     manager = path_manager_base(wp_list)
 
-    #for i in range(0,2):
-    #    manager.iterate()
-
-    #'''
-    while not manager.index_a == 0:
-        manager.iterate()
-    #manager.iterate() # for circling back to home
-    #'''
-
-    #print manager.point_list
+    if len(wp_list) >= 3: # Do NOT iterate unless wp_list has at least 3 waypoints
+                          # ...the lower limit may actually be 2--I haven't really checked
+                          # the updated algorithms.
+        while not manager.index_a == 0:
+            manager.iterate()
+    
     return manager.point_list
