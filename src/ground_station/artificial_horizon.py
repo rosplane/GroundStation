@@ -43,7 +43,7 @@ class ArtificialHorizon(QtGui.QWidget):
         if self.count > 10:
             self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
-            self.heading =  int (math.floor(state.psi*(180.0/math.pi)))
+            self.heading =  int (math.floor(state.psi*(180.0/math.pi))) % 360
             self.speed =    int (math.floor(state.Va*1.94384))
             self.altitude = int (math.floor(state.position[2]*(-3.28084))) + 22 # ===============
             self.update()
@@ -111,9 +111,6 @@ class ArtificialHorizon(QtGui.QWidget):
         brush = QtGui.QBrush(QColor(100,100,100,200))
         painter.setPen(QPen(QBrush(Qt.yellow), 2, Qt.SolidLine))
         painter.fillRect(QRectF((self.width-boxWidth)/2,self.height-boxHeight,boxWidth,boxHeight),brush)
-
-        if self.heading < 0:
-            self.heading += 360
 
         directions = {0:"N",45:"NE",90:"E",135:"SE",180:"S",215:"SW",270:"W",315:"NW"}
         scale = 0.01

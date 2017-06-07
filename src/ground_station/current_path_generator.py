@@ -30,7 +30,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
         def __init__(self, wp_list):
 
             # Init Params
-            self.R_min = rospy.get_param('R_min', 75.0)
+            self.R_min = rospy.get_param('R_min', 50.0)
 
             # waypoint 0 should be initial position, waypoint 1 where you want to start flying to
             self.index_a = 1
