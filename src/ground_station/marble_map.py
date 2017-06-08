@@ -29,8 +29,9 @@ class GPSSubscriber():
         self.lon = 0.0
         self.altitude = 0.0
         rospy.Subscriber("/gps/data", GPS, self.callback)
-        #rospy.Subscriber("/waypoint_path", FW_Waypoint, self.callback_waypoints)
-
+        # Simulator topic
+        rospy.Subscriber("/mav0/gps/data", GPS, self.callback)
+        
     def callback(self, gps):
         self.lat = gps.latitude
         self.lon = -1.0*gps.longitude
@@ -85,21 +86,30 @@ class StateSubscriber(): # Using GPS state output to avoid conversions for displ
     def __init__(self):
         self.lat = 0.0
         self.lon = 0.0
+        self.pn = 0.0
+        self.pe = 0.0
         self.psi = 0.0
 
-        rospy.Subscriber("/gps_state", State, self.callback)
+        rospy.Subscriber("/mav0/truth", State, self.truthCallback)
+        rospy.Subscriber("/mav0/gps_state", State, self.gpsStateCallback)
 
-    def callback(self, state):
+    def truthCallback(self, state):
+        self.pn = state.position[0]
+        self.pe = state.position[1]
+        self.psi = fmod(state.chi, 2*pi)
+        
+    def gpsStateCallback(self, state):
         self.lat = state.position[0]
         self.lon = state.position[1]
         self.psi = fmod(state.chi, 2*pi)
 
 class MiscSubscriber():
     def __init__(self):
-        rospy.Subscriber("/current_path", Current_Path, self.callback_curPath)
-        rospy.Subscriber("/rc_raw", RCRaw, self.callback_RC)
-        rospy.Subscriber("/waypoint_path", Waypoint, self.callback_waypoints)
-        rospy.Subscriber("/gps/data", GPS, self.callback_GPS)
+        rospy.Subscriber("/mav0/current_path", Current_Path, self.callback_curPath)
+        #rospy.Subscriber("/rc_raw", RCRaw, self.callback_RC)
+        #rospy.Subscriber("/mav0/waypoint_path", Waypoint, self.callback_waypoints)
+        rospy.Subscriber("/mav0/gps/data", GPS, self.callback_GPS)
+
 
         self.autopilotEnabled = False
         self.curPath = Current_Path()
@@ -249,55 +259,64 @@ class PaintLayer(Marble.LayerInterface, QObject):
         else:
             painter.setPen(QPen(QBrush(Qt.red), 3.5, Qt.SolidLine, Qt.RoundCap))
 
-        #de = self.stateSubscriber.pe
-        lat = self.stateSubscriber.lat # dnToLat
-        #dn = self.stateSubscriber.pn
-        lon = self.stateSubscriber.lon # deToLon
+        referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())
+
         psi = self.stateSubscriber.psi
 
         # Draw Plane Lines with pts 1-7
-        referenceDistance = self.marble.distanceFromZoom(self.marble.zoom())
-        scaled_h = 6.5e-5*self.h*referenceDistance
-        scaled_w = 6.5e-5*self.w*referenceDistance
-
-        #pt_1 = [de + self.rotate_x(0, scaled_h/2, psi), dn + self.rotate_y(0, scaled_h/2, psi)]
-        pt_1 = [lon + self.rotate_x(0, scaled_h/2, psi), lat + self.rotate_y(0, scaled_h/2, psi)]
-        #pt_2 = [de + self.rotate_x(0, -scaled_h/2, psi), dn + self.rotate_y(0, -scaled_h/2, psi)]
-        pt_2 = [lon + self.rotate_x(0, -scaled_h/2, psi), lat + self.rotate_y(0, -scaled_h/2, psi)]
         line_1 = Marble.GeoDataLineString()
-        #line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_1[0]), self.dnToLat(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_1.append(Marble.GeoDataCoordinates(pt_1[0], pt_1[1], 0.0, Marble.GeoDataCoordinates.Degree))
-        #line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_2[0]), self.dnToLat(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_1.append(Marble.GeoDataCoordinates(pt_2[0], pt_2[1], 0.0, Marble.GeoDataCoordinates.Degree))
-        #pt_3 = [de, dn]
-        pt_3 = [lon, lat]
-
-        #pt_4 = [de + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
-        pt_4 = [lon + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), lat + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
-        #pt_5 = [de + self.rotate_x(scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
-        pt_5 = [lon + self.rotate_x(scaled_w/2, -scaled_h/4, psi), lat + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
         line_2 = Marble.GeoDataLineString()
-        #line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_2.append(Marble.GeoDataCoordinates(pt_3[0], pt_3[1], 0.0, Marble.GeoDataCoordinates.Degree))
-        #line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_4[0]), self.dnToLat(pt_4[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_2.append(Marble.GeoDataCoordinates(pt_4[0], pt_4[1], 0.0, Marble.GeoDataCoordinates.Degree))
-
         line_3 = Marble.GeoDataLineString()
-        #line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_3.append(Marble.GeoDataCoordinates(pt_3[0], pt_3[1], 0.0, Marble.GeoDataCoordinates.Degree))
-        #line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_5[0]), self.dnToLat(pt_5[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_3.append(Marble.GeoDataCoordinates(pt_5[0], pt_5[1], 0.0, Marble.GeoDataCoordinates.Degree))
-
-        #pt_6 = [de + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
-        pt_6 = [lon + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), lat + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
-        #pt_7 = [de + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
-        pt_7 = [lon + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), lat + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
-
         line_4 = Marble.GeoDataLineString()
-        #line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_6[0]), self.dnToLat(pt_6[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_4.append(Marble.GeoDataCoordinates(pt_6[0], pt_6[1], 0.0, Marble.GeoDataCoordinates.Degree))
-        #line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_7[0]), self.dnToLat(pt_7[1]), 0.0, Marble.GeoDataCoordinates.Degree))
-        line_4.append(Marble.GeoDataCoordinates(pt_7[0], pt_7[1], 0.0, Marble.GeoDataCoordinates.Degree))
+
+        useTruth = True
+
+        if useTruth:
+            de = self.stateSubscriber.pe
+            dn = self.stateSubscriber.pn
+            scaled_h = 6.5*self.h*referenceDistance
+            scaled_w = 6.5*self.w*referenceDistance
+            pt_1 = [de + self.rotate_x(0, scaled_h/2, psi), dn + self.rotate_y(0, scaled_h/2, psi)]
+            pt_2 = [de + self.rotate_x(0, -scaled_h/2, psi), dn + self.rotate_y(0, -scaled_h/2, psi)]
+            line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_1[0]), self.dnToLat(pt_1[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            line_1.append(Marble.GeoDataCoordinates(self.deToLon(pt_2[0]), self.dnToLat(pt_2[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+
+            pt_3 = [de, dn]
+            pt_4 = [de + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
+            pt_5 = [de + self.rotate_x(scaled_w/2, -scaled_h/4, psi), dn + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
+            line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            line_2.append(Marble.GeoDataCoordinates(self.deToLon(pt_4[0]), self.dnToLat(pt_4[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+
+            line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_3[0]), self.dnToLat(pt_3[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            line_3.append(Marble.GeoDataCoordinates(self.deToLon(pt_5[0]), self.dnToLat(pt_5[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+
+            pt_6 = [de + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
+            pt_7 = [de + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), dn + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
+            line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_6[0]), self.dnToLat(pt_6[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+            line_4.append(Marble.GeoDataCoordinates(self.deToLon(pt_7[0]), self.dnToLat(pt_7[1]), 0.0, Marble.GeoDataCoordinates.Degree))
+        else:
+            lat = self.stateSubscriber.lat # dnToLat
+            lon = self.stateSubscriber.lon # deToLon
+            scaled_h = 6.5e-5*self.h*referenceDistance
+            scaled_w = 6.5e-5*self.w*referenceDistance
+            pt_1 = [lon + self.rotate_x(0, scaled_h/2, psi), lat + self.rotate_y(0, scaled_h/2, psi)]
+            pt_2 = [lon + self.rotate_x(0, -scaled_h/2, psi), lat + self.rotate_y(0, -scaled_h/2, psi)]
+            line_1.append(Marble.GeoDataCoordinates(pt_1[0], pt_1[1], 0.0, Marble.GeoDataCoordinates.Degree))
+            line_1.append(Marble.GeoDataCoordinates(pt_2[0], pt_2[1], 0.0, Marble.GeoDataCoordinates.Degree))
+
+            pt_3 = [lon, lat]
+            pt_4 = [lon + self.rotate_x(-scaled_w/2, -scaled_h/4, psi), lat + self.rotate_y(-scaled_w/2, -scaled_h/4, psi)]
+            pt_5 = [lon + self.rotate_x(scaled_w/2, -scaled_h/4, psi), lat + self.rotate_y(scaled_w/2, -scaled_h/4, psi)]
+            line_2.append(Marble.GeoDataCoordinates(pt_3[0], pt_3[1], 0.0, Marble.GeoDataCoordinates.Degree))
+            line_2.append(Marble.GeoDataCoordinates(pt_4[0], pt_4[1], 0.0, Marble.GeoDataCoordinates.Degree))
+
+            line_3.append(Marble.GeoDataCoordinates(pt_3[0], pt_3[1], 0.0, Marble.GeoDataCoordinates.Degree))
+            line_3.append(Marble.GeoDataCoordinates(pt_5[0], pt_5[1], 0.0, Marble.GeoDataCoordinates.Degree))
+
+            pt_6 = [lon + self.rotate_x(-scaled_w/4, -2*scaled_h/5, psi), lat + self.rotate_y(-scaled_w/4, -2*scaled_h/5, psi)]
+            pt_7 = [lon + self.rotate_x(scaled_w/4, -2*scaled_h/5, psi), lat + self.rotate_y(scaled_w/4, -2*scaled_h/5, psi)]
+            line_4.append(Marble.GeoDataCoordinates(pt_6[0], pt_6[1], 0.0, Marble.GeoDataCoordinates.Degree))
+            line_4.append(Marble.GeoDataCoordinates(pt_7[0], pt_7[1], 0.0, Marble.GeoDataCoordinates.Degree))
 
         painter.drawPolyline(line_1)
         painter.drawPolyline(line_2)
@@ -384,7 +403,7 @@ class GPSInitSubscriber():
         self.plane_latlon = [0.0, 0.0, 0.0] # lat, lon, alt
         self.received_msg = False
         self.GB = Geobase(self.plane_latlon[0], self.plane_latlon[1])
-        self.gi_sub = rospy.Subscriber("/gps_init", Float32MultiArray, self.callback)
+        self.gi_sub = rospy.Subscriber("/mav0/gps_init", Float32MultiArray, self.callback)
 
     def callback(self, gps_array):
         self.plane_latlon[0] = gps_array.data[0]

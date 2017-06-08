@@ -14,7 +14,7 @@ PWD = os.path.dirname(os.path.abspath(__file__))
 
 class WP_Publisher():
     def __init__(self):
-        self.pub = rospy.Publisher('/waypoint_path', Waypoint, queue_size=50)
+        self.pub = rospy.Publisher('/mav0/waypoint_path', Waypoint, queue_size=50)
 
     def publish_wp_to_plane(self, wp, chi, flag, land):
         wp_obj = Waypoint()
