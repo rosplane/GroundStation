@@ -51,7 +51,7 @@ def get_waypoints(wp_file_path):
                 raise
         open(wp_file_path, 'a').close()
         return []
-
+        
 def get_main_waypoints(map_name):
     wp_file_path = os.path.join(PWD, 'resources', 'wp_data','main_wps', '%s_main_wps.txt' % map_name)
     return get_waypoints(wp_file_path)
@@ -75,3 +75,14 @@ def get_target_waypoints(map_name):
 def get_hiker_waypoints(map_name):
     wp_file_path = os.path.join(PWD, 'resources', 'wp_data','hiker_wps', '%s_hiker_wps.txt' % map_name)
     return get_waypoints(wp_file_path)
+
+def get_windspeed_components():
+    ws_file_path = os.path.join(PWD, 'resources', 'wp_data', 'drop_wps', '_WINDSPEED_.txt')
+    try:
+        with open(ws_file_path, 'r') as ws_file:
+            ws_t = ws_file.read().split()
+            Vwind_n = float(ws_t[0])
+            Vwind_e = float(ws_t[1])
+        return [Vwind_n, Vwind_e]
+    except:
+        return [0.0, 0.0]
