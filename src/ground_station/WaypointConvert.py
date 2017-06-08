@@ -18,7 +18,7 @@ from math import cos
 from math import sqrt
 
 #constant
-EARTH_RADIUS = 6371008.0							#in meters
+EARTH_RADIUS = 6370027.0							#in meters
 
 #Function decimal_degrees
 #Pre: string is in format [N/E or S/W]DD-MM-SS.SS
