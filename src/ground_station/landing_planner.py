@@ -16,11 +16,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	#rospy.init_node('landing_path_planner', anonymous=True)
 
 	# Init Publisher
-	waypointPublisher = rospy.Publisher('waypoint_path',Waypoint, queue_size=10)
-
-	# Sleep, (this fixed bug of first waypoint not publishing)
-	d = rospy.Duration(.5)
-	rospy.sleep(d)
+	waypointPublisher = rospy.Publisher('/waypoint_path',Waypoint, queue_size=10)
 
 	land_point = [float(lp1), float(lp2)] # North, East (meters)
 	approach_angle = float(aa)*math.pi/180 # chi in degrees (East of North)
@@ -76,13 +72,13 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	approach3.chi_valid = True # True
 	approach3.set_current = False
 	approach3.reset = False
-	approach3.land = True
+	approach3.land = False
 	approach3.drop = False
 
 	# Setup approach 4
 	approach4 = Waypoint()
-	approach4.w[0] = land_point[0] - math.cos(approach_angle)*300
-	approach4.w[1] = land_point[1] - math.sin(approach_angle)*300
+	approach4.w[0] = land_point[0] - math.cos(approach_angle)*250
+	approach4.w[1] = land_point[1] - math.sin(approach_angle)*250
 	approach4.w[2] = -33.0
 	approach4.chi_d = approach_angle
 	approach4.Va_d = 15.0
@@ -169,9 +165,6 @@ def publishwaypoints(lp1, lp2, aa, direction):
 		# Publish the Waypoint
 		waypointPublisher.publish(wp)
 
-		# Sleep
-		d = rospy.Duration(0.1)
-		rospy.sleep(d)
 
 
 if __name__ == '__main__':
