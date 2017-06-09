@@ -20,7 +20,7 @@ RTH_ALT = 10 # "return to home" command will have the plane fly 10 m above home 
 
 class CmWindow(QWidget):
 
-    drop_pub = rospy.Publisher('bomb_drop', Bool, queue_size=5)
+    drop_pub = rospy.Publisher('mav0/bomb_drop', Bool, queue_size=5)
 
     def __init__(self, marble, uifname = 'cm_window.ui'):
         super(CmWindow, self).__init__()
