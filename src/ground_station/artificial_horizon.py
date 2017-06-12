@@ -33,7 +33,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.show()
 
     def addSubscribers(self):
-        rospy.Subscriber("/mav0/truth", State, self.subscriberCallback)
+        rospy.Subscriber("/gps_truth", State, self.subscriberCallback)
         rospy.Subscriber("/mav0/gps/data", GPS, self.callback_GPS)
         rospy.Subscriber("/mav0/waypoint_error", Float32, self.WPAccuracyCallback)
 
@@ -45,12 +45,12 @@ class ArtificialHorizon(QtGui.QWidget):
 
     def subscriberCallback(self, state):
         self.count += 1
-        if self.count > 100:
+        if self.count > 10:
             self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
             self.heading =  int (math.floor(state.psi*(180.0/math.pi))) % 360
-            self.speed =    int (math.floor(state.Va*1.94384))
-            self.altitude = int (math.floor(state.position[2]*(-3.28084))) + 22 # ===============
+            self.speed =    int (math.floor(state.Va))
+            self.altitude = int (math.floor(state.position[2])) # ===============
             self.update()
             self.count = 0
 
