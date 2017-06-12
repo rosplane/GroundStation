@@ -17,7 +17,7 @@ class drop_plan:
 		# self.target_lat = lat      #Target latitude
 		# self.target_lon = lon     #Target longitude
 		target_global = [lat, lon]
-		chi_c = angle # (degrees)
+		chi_c = math.radians(angle) # (degrees)
 		h_c = 33.0
 		Va_c = 15.0
 		Vwind_n = wind_n
@@ -46,13 +46,13 @@ class drop_plan:
 		# Init ROS Node (not when being used with GUI)
 		#rospy.init_node('drop_planner', anonymous=True)
 
-		self.wp_pub = rospy.Publisher('waypoint_path', Waypoint, queue_size=10)
+		self.wp_pub = rospy.Publisher('/mav0/waypoint_path', Waypoint, queue_size=10)
 
 		# subscribe to gps_init
-		self.gps_init_sub = rospy.Subscriber('gps_init', Float32MultiArray, self.gps_init_callback)
+		self.gps_init_sub = rospy.Subscriber('/mav0/gps_init', Float32MultiArray, self.gps_init_callback)
 
 		while (self.init_lat == 0.0) and (self.init_lon == 0.0):
-			rospy.logwarn_throttle(1, "Drop Planner waiting for GPS init")
+			rospy.logwarn("Drop Planner waiting for GPS init")
 
 		self.alt = self.alt*.3048                         #convert altitude in meters
 
@@ -165,11 +165,15 @@ class drop_plan:
 
 	def publishdroppoints(self):
 
-		comp_north = 90*math.cos(self.angle)
-		comp_east = 90*math.sin(self.angle)
+		fudge = 0
+		self.north -= fudge*math.cos(self.angle)
+		self.east -= fudge*math.sin(self.angle)
 
-		comp_north2 = 200*math.cos(self.angle)
-		comp_east2 = 200*math.sin(self.angle)
+		comp_north = 50*math.cos(self.angle)
+		comp_east = 50*math.sin(self.angle)
+
+		# comp_north2 = 200*math.cos(self.angle)
+		# comp_east2 = 200*math.sin(self.angle)
 
 		#WAYPOINT 1
 		north1 = self.north - comp_north            #north coordinate of target + north component of 100meters for wypt 1
@@ -182,10 +186,6 @@ class drop_plan:
 		east2 = self.east + comp_east                #east coordinate of target - east component of 100meters for wypt 2
 		down2 = self.down
 		# waypoint2 = [north2, east2, down2, angle]
-
-		# Apprach 1
-		north3 = self.north - comp_north2
-		east3 = self.east - comp_east2
 
 		# print(north,east,down)
 		# print(waypoint1,waypoint2)
