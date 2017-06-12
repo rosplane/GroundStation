@@ -1,6 +1,7 @@
 from python_qt_binding import loadUi
 from PyQt4.Qt import *
 from current_path_generator import get_full_current_path
+from drop_planner import drop_plan
 
 try:
     from PyQt4.QtCore import QString
@@ -61,10 +62,13 @@ class WpWindow(QWidget):
         # For signal handling
         self.marble.WPH.home_changed.connect(self.change_home)
 
+        # For bottle drop
+        self.Vw_comps = map_info_parser.get_windspeed_components() # [Vwind_n, Vwind_e]
+
     # CHANGE TRIGGERS
 
     def load_wp_mode(self):
-        self.save_waypoints()
+        #self.save_waypoints()
         if str(self.mode_comboBox.currentText()) == 'Main Mode':
             self.marble.wp_state = 'MainWP'
         elif str(self.mode_comboBox.currentText()) == 'Path Mode':
@@ -82,7 +86,7 @@ class WpWindow(QWidget):
         self.full_update()
 
     def change_home(self, new_home):
-        self.save_waypoints()
+        #self.save_waypoints()
         self._home_map = new_home
         self.full_update()
 
@@ -104,11 +108,6 @@ class WpWindow(QWidget):
     # UPDATE FUNCTIONS
 
     def compile_NED_waypoints(self):
-        # make dummy first waypoint at home point for the path manager algorithm
-        #meter_data = self.marble.GB.gps_to_ned(self.marble.latlon[0] ,self.marble.latlon[1],
-        #                                       (self.waypoints[0][2]-22.0)/3.28084)
-        #self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], self.waypoints[0][3]])
-
         for wp in self.waypoints:
             meter_data = self.marble.GB.gps_to_ned(wp[0],wp[1], (wp[2]-22.0)/3.28084)
             self.NED_waypoints.append([meter_data[0], meter_data[1], meter_data[2], wp[3]])
@@ -175,17 +174,32 @@ class WpWindow(QWidget):
                 wp_file.write('%f %f %f %f\n' % (wp[0], wp[1], wp[2], wp[3]))
 
     def transfer_waypoint_data(self): # needs new self.waypoints
-        if self.marble.GIS.received_msg and not self.marble.wp_state == 'None':
+        if self.marble.wp_state == 'DropWP' and len(self.waypoints) > 0:
+            # only expecting to have 1 waypoint
+            wp = self.waypoints[0]
+            lat = wp[0]
+            lon = wp[1]
+            # altitude not used!
+            angle = wp[3]
+            wind_n = self.Vw_comps[0]
+            print 'wind_n:', wind_n # ------------------------------
+            wind_e = self.Vw_comps[1]
+            print 'wind_e:', wind_e # ------------------------------
+            # the following class will automatically publish the drop waypoints:
+            drop_wp_publisher = drop_plan(lat, lon, angle, wind_n, wind_e)
+        elif self.marble.GIS.received_msg and not self.marble.wp_state == 'None':
             wp = self.waypoints[0]
             meter_data = self.marble.GIS.GB.gps_to_ned(wp[0],wp[1], (wp[2]-22.0)/3.28084)
             self.WPP.publish_wp_to_plane(meter_data, wp[3], True, False)
             for wp in self.waypoints[1:]:
                 meter_data = self.marble.GIS.GB.gps_to_ned(wp[0], wp[1], (wp[2]-22.0)/3.28084)
                 self.WPP.publish_wp_to_plane(meter_data, wp[3], False, False)
+            #self.WPP.publish_wp_to_plane([0, -50, -60], 0.0, False, False)
 
     # MISCELLANEOUS
 
     def closeEvent(self, QCloseEvent):
-        self.save_waypoints()
+        pass
+        #self.save_waypoints()
         #self.marble.setInputEnabled(True)
         #self.marble._mouse_attentive = False

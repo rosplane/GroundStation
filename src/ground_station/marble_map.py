@@ -146,12 +146,9 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
         self.use_interop_boundaries = True # <<<<< Assign to True to use interop server for boundaries
 
-        # For meters to GPS conversion and plane geometry
-        # specifically starting lat, lon of the plane
-        #if self.marble.GIS.received_msg: # +++++++++++++++++++++++++++++++++++++++++
-        #    self.latlon = self.marble.latlon
-        self.R = 6371000.0           # Radius of earth in meters
-        #self.R_prime = cos(radians(self.latlon[0]))*self.R
+        #self.R = 6371000.0      # Radius of earth in meters
+        self.R = 6370027.0      # Radius of the earth in meters at the competition
+
         self.h = 20
         self.w = 20
 
