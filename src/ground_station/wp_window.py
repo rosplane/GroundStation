@@ -68,7 +68,7 @@ class WpWindow(QWidget):
     # CHANGE TRIGGERS
 
     def load_wp_mode(self):
-        self.save_waypoints()
+        #self.save_waypoints()
         if str(self.mode_comboBox.currentText()) == 'Main Mode':
             self.marble.wp_state = 'MainWP'
         elif str(self.mode_comboBox.currentText()) == 'Path Mode':
@@ -86,7 +86,7 @@ class WpWindow(QWidget):
         self.full_update()
 
     def change_home(self, new_home):
-        self.save_waypoints()
+        #self.save_waypoints()
         self._home_map = new_home
         self.full_update()
 
@@ -194,10 +194,12 @@ class WpWindow(QWidget):
             for wp in self.waypoints[1:]:
                 meter_data = self.marble.GIS.GB.gps_to_ned(wp[0], wp[1], (wp[2]-22.0)/3.28084)
                 self.WPP.publish_wp_to_plane(meter_data, wp[3], False, False)
+            #self.WPP.publish_wp_to_plane([0, -50, -60], 0.0, False, False)
 
     # MISCELLANEOUS
 
     def closeEvent(self, QCloseEvent):
-        self.save_waypoints()
+        pass
+        #self.save_waypoints()
         #self.marble.setInputEnabled(True)
         #self.marble._mouse_attentive = False

@@ -205,10 +205,10 @@ class drop_plan:
 
 		# Setup approach 1
 		approach1 = Waypoint()
-		approach1.w[0] = north3
-		approach1.w[1] = east3
+		approach1.w[0] = north1 + 110*math.sin(self.angle)
+		approach1.w[1] = east1 + 110*math.cos(self.angle)
 		approach1.w[2] = self.down
-		approach1.chi_d = self.angle
+		approach1.chi_d = self.angle + math.pi
 		approach1.Va_d = 15.0
 		approach1.chi_valid = True # True
 		approach1.set_current = False

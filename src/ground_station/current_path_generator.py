@@ -91,7 +91,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
                 output = self.manage_line()
             else:
                 output = self.manage_dubins()
-            
+
             return output
 
         def manage_dubins(self):
@@ -181,7 +181,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             ang = atan2(cle.item(1)-cls.item(1), cle.item(0)-cls.item(0))
             L4 = np.linalg.norm(cls-cle) + R * mod2pi(2 * np.pi + mod2pi(chi_s + np.pi / 2) - mod2pi(ang + np.pi / 2)) \
                  + R * mod2pi(2 * np.pi + mod2pi(ang + np.pi / 2) - mod2pi(chi_e + np.pi / 2))
-            
+
             lengths = [L1, L2, L3, L4]
             if min(lengths) == L1:
                 cs = crs
@@ -237,7 +237,6 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             return temp
 
         def manage_line(self):
-            print 'LINE'
 
             b = self._waypoints[self.index_a]
             a = self.waypoint_temp()
@@ -350,5 +349,5 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
                           # the updated algorithms.
         while not manager.index_a == 0:
             manager.iterate()
-    
+
     return manager.point_list
