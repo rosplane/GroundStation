@@ -51,29 +51,9 @@ def get_waypoints(wp_file_path):
                 raise
         open(wp_file_path, 'a').close()
         return []
-        
-def get_main_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','main_wps', '%s_main_wps.txt' % map_name)
-    return get_waypoints(wp_file_path)
 
-def get_path_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','path_wps', '%s_path_wps.txt' % map_name)
-    return get_waypoints(wp_file_path)
-
-def get_search_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','search_wps', '%s_search_wps.txt' % map_name)
-    return get_waypoints(wp_file_path)
-
-def get_drop_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','drop_wps', '%s_drop_wps.txt' % map_name)
-    return get_waypoints(wp_file_path)
-
-def get_target_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','target_wps', '%s_target_wps.txt' % map_name)
-    return get_waypoints(wp_file_path)
-
-def get_hiker_waypoints(map_name):
-    wp_file_path = os.path.join(PWD, 'resources', 'wp_data','hiker_wps', '%s_hiker_wps.txt' % map_name)
+def get_typed_waypoints(map_name, folder_name):
+    wp_file_path = os.path.join(PWD,'resources','wp_data',folder_name,'%s_%s.txt' % (map_name, folder_name))
     return get_waypoints(wp_file_path)
 
 def get_windspeed_components():

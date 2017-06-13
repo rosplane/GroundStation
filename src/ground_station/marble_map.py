@@ -407,6 +407,14 @@ class MarbleMap(Marble.MarbleWidget):
         self.setShowOverviewMap(False)
 
         self.WPH = WP_Handler()
+        self.wp_opts = {'None':{'title_substr':'Empty Mode','folder_name':'','is_rrt':False},
+                        'MainWP':{'title_substr':'Main Waypoints','folder_name':'main_wps','is_rrt':False},
+                        'PathWP':{'title_substr':'Path Waypoints','folder_name':'path_wps','is_rrt':False},
+                        'SearchWP':{'title_substr':'Search Waypoints','folder_name':'search_wps','is_rrt':False},
+                        'RRT_PathWP':{'title_substr':'RRT Path Waypoints','folder_name':'rrt_path_wps','is_rrt':True,'parent':'PathWP'},
+                        'RRT_SearchWP':{'title_substr':'RRT Search Waypoints','folder_name':'rrt_search_wps','is_rrt':True,'parent':'SearchWP'},
+                        'DropWP':{'title_substr':'Bottle Drop Waypoints','folder_name':'drop_wps','is_rrt':False},
+                        'HikerWP':{'title_substr':'Hiker Waypoints','folder_name':'hiker_wps','is_rrt':False}}
         self.wp_state = 'None' # can be 'None','MainWP','PathWP','SearchWP',
                                #        'DropWP','TargetWP','HikerWP'
         # For waypoint conversion
