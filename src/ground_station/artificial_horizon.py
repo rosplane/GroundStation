@@ -3,6 +3,7 @@ from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot, pyqtSignal, Qt, QPointF,QRectF, QPoint
 from PyQt4.QtGui import QColor, QBrush, QPen, QFont, QPolygon
 from rosflight_msgs.msg import State, GPS
+from std_msgs.msg import Float32
 
 class ArtificialHorizon(QtGui.QWidget):
     def __init__(self):
@@ -21,6 +22,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.altitude = 0 # ft MSL
         self.heading = 0  # degrees
         self.numSat = 0   # Number of Satellites (GPS)
+        self.latestWpAccuracy = 0
 
         self.pitchInterval = 0.013 # % of height used to display 1 degree
 
@@ -31,9 +33,12 @@ class ArtificialHorizon(QtGui.QWidget):
         self.show()
 
     def addSubscribers(self):
-        rospy.Subscriber("/junker/truth", State, self.subscriberCallback)
-        rospy.Subscriber("/state", State, self.subscriberCallback)
+        rospy.Subscriber("/gps_state", State, self.subscriberCallback)
         rospy.Subscriber("/gps/data", GPS, self.callback_GPS)
+        rospy.Subscriber("/waypoint_error", Float32, self.WPAccuracyCallback)
+
+    def WPAccuracyCallback(self, data):
+        self.latestWpAccuracy = data.data
 
     def callback_GPS(self, gps_data):
         self.numSat = gps_data.NumSat
@@ -44,8 +49,8 @@ class ArtificialHorizon(QtGui.QWidget):
             self.roll =     int (math.floor(state.phi*(180.0/math.pi)))
             self.pitch =    int (math.floor(state.theta*(180.0/math.pi)))
             self.heading =  int (math.floor(state.psi*(180.0/math.pi))) % 360
-            self.speed =    int (math.floor(state.Va*1.94384))
-            self.altitude = int (math.floor(state.position[2]*(-3.28084))) + 22 # ===============
+            self.speed =    int (math.floor(state.Va))
+            self.altitude = int (math.floor(state.position[2])) # ===============
             self.update()
             self.count = 0
 
@@ -83,6 +88,7 @@ class ArtificialHorizon(QtGui.QWidget):
         self.drawAltitudeIndicator(event, painter)
         self.drawHeadingIndicator(event, painter)
         self.drawNumSatellites(event, painter)
+        self.drawWaypointAccuracy(event, painter)
 
     def drawNumSatellites(self, event, painter):
         p1 = QPoint(0,0)
@@ -93,6 +99,12 @@ class ArtificialHorizon(QtGui.QWidget):
         else:
             painter.setPen(QPen(QBrush(Qt.green), 2, Qt.SolidLine))
         painter.drawText(rect,QtCore.Qt.AlignCenter,"GPS: " + str(self.numSat) + " satellites")
+
+    def drawWaypointAccuracy(self, event, painter):
+        p1 = QPoint(self.width*(0.65),0)
+        p2 = QPoint(self.width,self.height*0.1)
+        rect = QRectF(p1,p2)
+        painter.drawText(rect,QtCore.Qt.AlignCenter,"Wp Accuracy: " + "%.2f" % self.latestWpAccuracy + " m")
 
     def drawSky(self, event, painter):
         brush = QtGui.QBrush(QtGui.QColor(38, 89, 242), QtCore.Qt.SolidPattern)
