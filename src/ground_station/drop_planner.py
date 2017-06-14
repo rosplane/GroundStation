@@ -165,7 +165,7 @@ class drop_plan:
 
 	def publishdroppoints(self):
 
-		fudge = 0
+		fudge = 25
 		self.north -= fudge*math.cos(self.angle)
 		self.east -= fudge*math.sin(self.angle)
 
@@ -205,8 +205,8 @@ class drop_plan:
 
 		# Setup approach 1
 		approach1 = Waypoint()
-		approach1.w[0] = north1 + 110*math.sin(self.angle)
-		approach1.w[1] = east1 + 110*math.cos(self.angle)
+		approach1.w[0] = north1 - 110*math.sin(self.angle)
+		approach1.w[1] = east1 - 110*math.cos(self.angle)
 		approach1.w[2] = self.down
 		approach1.chi_d = self.angle + math.pi
 		approach1.Va_d = 15.0
