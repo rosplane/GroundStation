@@ -32,7 +32,7 @@ def write_waypoints(old_wp_path, new_wp_path):
 
 	with open(old_wp_path) as f:
 		for line in f:
-			latlon = line.split(' ')
+			latlon = line.split()
 			lat = float(latlon[0])
 			lon = float(latlon[1])
 			alt = float(latlon[2])

@@ -71,6 +71,8 @@ class WpWindow(QWidget):
         # For bottle drop
         self.Vw_comps = map_info_parser.get_windspeed_components() # [Vwind_n, Vwind_e]
 
+        #self.rendered_rrt_path = False
+        #self.rendered_rrt_search = False
     # CHANGE TRIGGERS
 
     def load_wp_mode(self):
@@ -89,7 +91,7 @@ class WpWindow(QWidget):
             self.marble.WPH.emit_removed(0)
         self.load_wp_from_file() # update self.waypoints
         if not self.marble.wp_opts[self.marble.wp_state]['folder_name'] == '':
-            if self.marble.wp_opts[self.marble.wp_state]['is_rrt']:
+            if self.marble.wp_opts[self.marble.wp_state]['is_rrt'] and len(self.waypoints) == 0:#self.marble.wp_opts[self.marble.wp_state]['needs_render']:
                 # create rrt file and reload
                 parent = self.marble.wp_opts[self.marble.wp_state]['parent']
                 old_folder_name = self.marble.wp_opts[parent]['folder_name']
@@ -100,6 +102,7 @@ class WpWindow(QWidget):
                 self.load_wp_from_file()
                 self.compile_NED_waypoints()
                 self.marble.current_path_NE_list = get_full_current_path(self.NED_waypoints)
+                #self.marble.wp_opts[self.marble.wp_state]['needs_render'] = False
             else:
                 self.compile_NED_waypoints()
                 self.marble.current_path_NE_list = get_full_current_path(self.NED_waypoints)

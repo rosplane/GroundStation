@@ -36,8 +36,8 @@ class inBounds:
     def pointInBounds(self, p_N, p_E):
         p = Point(p_N, p_E)
         ans = pointInPolygon(p, self.bounds)
-        if not ans:
-            print "Point out of Bounds"
+        #if not ans:
+        #    print "Point out of Bounds"
         return ans
 
 class Obstacle:
