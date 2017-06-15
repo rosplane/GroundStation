@@ -146,12 +146,9 @@ class PaintLayer(Marble.LayerInterface, QObject):
 
         self.use_interop_boundaries = True # <<<<< Assign to True to use interop server for boundaries
 
-        # For meters to GPS conversion and plane geometry
-        # specifically starting lat, lon of the plane
-        #if self.marble.GIS.received_msg: # +++++++++++++++++++++++++++++++++++++++++
-        #    self.latlon = self.marble.latlon
-        self.R = 6371000.0           # Radius of earth in meters
-        #self.R_prime = cos(radians(self.latlon[0]))*self.R
+        #self.R = 6371000.0      # Radius of earth in meters
+        self.R = 6370027.0      # Radius of the earth in meters at the competition
+
         self.h = 20
         self.w = 20
 
@@ -429,6 +426,14 @@ class MarbleMap(Marble.MarbleWidget):
         self.setShowOverviewMap(False)
 
         self.WPH = WP_Handler()
+        self.wp_opts = {'None':{'title_substr':'Empty Mode','folder_name':'','is_rrt':False},
+                        'MainWP':{'title_substr':'Main Waypoints','folder_name':'main_wps','is_rrt':False},
+                        'PathWP':{'title_substr':'Path Waypoints','folder_name':'path_wps','is_rrt':False},
+                        'SearchWP':{'title_substr':'Search Waypoints','folder_name':'search_wps','is_rrt':False},
+                        'RRT_PathWP':{'title_substr':'RRT Path Waypoints','folder_name':'rrt_path_wps','is_rrt':True,'parent':'PathWP'},
+                        'RRT_SearchWP':{'title_substr':'RRT Search Waypoints','folder_name':'rrt_search_wps','is_rrt':True,'parent':'SearchWP'},
+                        'DropWP':{'title_substr':'Bottle Drop Waypoints','folder_name':'drop_wps','is_rrt':False},
+                        'HikerWP':{'title_substr':'Hiker Waypoints','folder_name':'hiker_wps','is_rrt':False}}
         self.wp_state = 'None' # can be 'None','MainWP','PathWP','SearchWP',
                                #        'DropWP','TargetWP','HikerWP'
         # For waypoint conversion

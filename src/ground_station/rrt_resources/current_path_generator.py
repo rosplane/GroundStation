@@ -237,6 +237,7 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             return temp
 
         def manage_line(self):
+            print 'LINE'
 
             b = self._waypoints[self.index_a]
             a = self.waypoint_temp()
@@ -342,9 +343,10 @@ def get_full_current_path(wp_list): # takes in list of NED waypoints, returns li
             points.append(np.array([end_pos.item(0), end_pos.item(1), end_pos.item(2)]))
             return points
 
+    # print "start manager"
     manager = path_manager_base(wp_list)
 
-    if len(wp_list) >= 3: # Do NOT iterate unless wp_list has at least 3 waypoints
+    if len(wp_list) >= 2: # Do NOT iterate unless wp_list has at least 3 waypoints
                           # ...the lower limit may actually be 2--I haven't really checked
                           # the updated algorithms.
         while not manager.index_a == 0:

@@ -1,6 +1,2 @@
-- get kml files for competition boundary and search boundary
-
-- create new variable to keep track of plane's initial position
-	and use THAT for ned conversions when sending to the plane
-
-- when it exists, get the plane state in GPS coords, no more conversions in THAT domain
+- RRT implementation
+	- test with simulator

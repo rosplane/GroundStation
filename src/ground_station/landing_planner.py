@@ -16,6 +16,7 @@ def publishwaypoints(lp1, lp2, aa, direction):
 	#rospy.init_node('landing_path_planner', anonymous=True)
 
 	# Init Publisher
+
 	waypointPublisher = rospy.Publisher('/mav0/waypoint_path',Waypoint, queue_size=10)
 
 	land_point = [float(lp1), float(lp2)] # North, East (meters)
