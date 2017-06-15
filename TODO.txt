@@ -1,3 +1,2 @@
 - RRT implementation
-	- consolidate different waypoint types
-	- get rid of targetWP
+	- test with simulator
