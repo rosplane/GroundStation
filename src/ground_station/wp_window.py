@@ -98,6 +98,8 @@ class WpWindow(QWidget):
                 new_file_path = os.path.join(PWD, 'resources', 'wp_data', new_folder_name, '%s_%s.txt' % (self._home_map, new_folder_name))
                 write_waypoints(old_file_path, new_file_path)
                 self.load_wp_from_file()
+                self.compile_NED_waypoints()
+                self.marble.current_path_NE_list = get_full_current_path(self.NED_waypoints)
             else:
                 self.compile_NED_waypoints()
                 self.marble.current_path_NE_list = get_full_current_path(self.NED_waypoints)

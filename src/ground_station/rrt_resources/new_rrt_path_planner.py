@@ -20,8 +20,8 @@ def write_waypoints(old_wp_path, new_wp_path):
 	# Init ROS Node
 	#rospy.init_node('new_rrt_path_plan', anonymous=True)
 
-	init_lat = 40.174477
-	init_lon = -111.651655
+	init_lat = 38.144614
+	init_lon = -76.427506
 	init_alt = 6.37
 
 	EARTH_RADIUS = 6370027.0
