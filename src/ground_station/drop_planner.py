@@ -164,8 +164,8 @@ class drop_plan:
 		return lat, lon
 
 	def publishdroppoints(self):
-
 		fudge = 0.0
+
 		self.north -= fudge*math.cos(self.angle)
 		self.east -= fudge*math.sin(self.angle)
 
